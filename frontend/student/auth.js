@@ -11,7 +11,7 @@
  */
 
 const AUTH_CONFIG = {
-  CLIENT_ID: 'PENDING_CLIENT_ID',
+  CLIENT_ID: '680126421530-3l43rbetvdghr01pq0ecnfpecb49cikj.apps.googleusercontent.com',
   BACKEND_URL: 'http://localhost:8080',
 };
 

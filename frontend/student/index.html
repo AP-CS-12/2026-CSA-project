@@ -6,6 +6,12 @@
   <title>Sign In — AP CS Adaptive Testing Platform</title>
   <link rel="stylesheet" href="style.css" />
 
+  <!-- Google Identity Services. Safe to load even before CLIENT_ID is set;
+       auth.js only calls google.accounts.id.initialize() when CLIENT_ID
+       has been swapped in, so no network auth request fires until then. -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="auth.js" defer></script>
+
   <!--
     index.html — Student Login Page
     ─────────────────────────────────────────────────────────────
@@ -246,19 +252,20 @@
       <p class="subtitle">Use your school Google account to continue.</p>
 
       <!--
-        INTEGRATION POINT (Front/Back Integration Team)
-        ─────────────────────────────────────────────────
-        Replace this button's onclick with the real Google
-        OAuth 2.0 flow. The data-action attribute is a hook
-        for your JS event listener.
-        After success, redirect to: dashboard.html
-        and store the returned session token.
+        GIS button is rendered by auth.js into #google-signin-container
+        once CLIENT_ID has been configured. Until then, #google-signin-stub
+        shows the original styled button in a disabled state so the layout
+        is identical and switchover is a one-line CLIENT_ID edit.
       -->
+      <div id="google-signin-container" hidden></div>
+
       <button
+        id="google-signin-stub"
         class="btn-google"
         data-action="google-signin"
         onclick="handleGoogleSignIn(event)"
-        aria-label="Sign in with Google"
+        aria-label="Sign in with Google (not yet configured)"
+        title="Google Sign-In will activate once the client ID is configured"
       >
         <!-- Google "G" logo SVG -->
         <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
@@ -347,22 +354,11 @@
        with real OAuth and API calls.
   ══════════════════════════════════════════════ -->
   <script>
-    /**
-     * handleGoogleSignIn()
-     * ─────────────────────────────────────────────
-     * PLACEHOLDER: Replace with real Google OAuth 2.0 flow.
-     * On success:
-     *   1. Store session token in sessionStorage
-     *   2. Redirect to dashboard.html
-     *
-     * Integration Team Endpoint: POST /api/auth/google
-     * Expected response: { token, student: { id, name, email, avatar } }
-     */
+    // Stub handler — only runs while CLIENT_ID is still the placeholder.
+    // Once auth.js swaps in the real GIS button, this button is hidden.
     function handleGoogleSignIn(e) {
       e.preventDefault();
-      // PLACEHOLDER — simulate redirect to dashboard
-      console.log('[Auth] Google Sign-In triggered. Replace with OAuth flow.');
-      window.location.href = 'dashboard.html';
+      alert('Google Sign-In is not yet configured. Ask the integration team for the CLIENT_ID, then set it in auth.js.');
     }
 
     /**
@@ -382,11 +378,26 @@
         return;
       }
 
-      // PLACEHOLDER — simulate successful login
-      console.log('[Auth] Login attempted for:', studentId);
-      sessionStorage.setItem('studentId', studentId); // DB Team: replace with real token
+      // PLACEHOLDER — simulate successful login using the session shape auth.js expects.
+      sessionStorage.setItem('authToken', 'dev-' + studentId);
+      sessionStorage.setItem('student', JSON.stringify({
+        id: studentId,
+        name: studentId,
+        email: '',
+        avatar: '',
+      }));
       window.location.href = 'dashboard.html';
     }
+
+    // Wait for the GIS script to finish loading, then hand off to auth.js.
+    // GIS exposes window.google.accounts.id once ready.
+    (function waitForGis() {
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        window.initGoogleAuth && window.initGoogleAuth();
+        return;
+      }
+      setTimeout(waitForGis, 50);
+    })();
   </script>
 
 </body>

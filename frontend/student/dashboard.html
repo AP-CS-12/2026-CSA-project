@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard — Adaptive Test Engine</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="auth.js"></script>
+  <script>
+    // Session guard: bounce to login if no session.
+    // Runs before <body> paints so unauthorized users never see the dashboard.
+    (function () {
+      const session = window.requireSession && window.requireSession();
+      if (session && session.student) {
+        window.__STUDENT__ = session.student;
+      }
+    })();
+  </script>
 
   <!--
     dashboard.html — Student Home Portal
@@ -535,15 +546,31 @@
     /**
      * handleLogout()
      * ─────────────────────────────────────────────
-     * PLACEHOLDER: Clear session and return to login.
-     * Integration Team: Also call POST /api/auth/logout
+     * Integration Team: also call POST /api/auth/logout once the
+     * backend endpoint exists, then clear local session.
      */
     function handleLogout() {
       if (confirm('Are you sure you want to sign out?')) {
-        sessionStorage.clear();
+        (window.clearSession || sessionStorage.clear.bind(sessionStorage))();
         window.location.href = 'index.html';
       }
     }
+
+    // Populate header and welcome banner with the signed-in student.
+    (function populateStudent() {
+      const s = window.__STUDENT__;
+      if (!s) return;
+      const setText = (sel, value) => {
+        document.querySelectorAll(sel).forEach(el => { if (value) el.textContent = value; });
+      };
+      setText('[data-bind="student-name"]', s.name);
+      setText('[data-bind="student-first-name"]', (s.name || '').split(' ')[0]);
+      const avatarEl = document.querySelector('[data-bind="student-avatar"]');
+      if (avatarEl && s.name) {
+        const initials = s.name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
+        avatarEl.textContent = initials;
+      }
+    })();
 
     // Allow keyboard activation of test cards (accessibility)
     document.querySelectorAll('.test-card[role="button"]').forEach(card => {

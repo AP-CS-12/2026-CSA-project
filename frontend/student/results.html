@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Test Results — Adaptive Test Engine</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="auth.js"></script>
+  <script>
+    // Session guard: bounce to login if no session.
+    // Runs before <body> paints so unauthorized users never see the results.
+    (function () {
+      const session = window.requireSession && window.requireSession();
+      if (session && session.student) {
+        window.__STUDENT__ = session.student;
+      }
+    })();
+  </script>
 
   <!--
     results.html — Post-Test Score & Review Page

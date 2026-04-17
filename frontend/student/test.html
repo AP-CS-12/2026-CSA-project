@@ -364,6 +364,10 @@
       font-size: 0.9rem;
     }
 
+    /* When the panel is loading, hide the real content and show only the spinner. */
+    .question-panel.is-loading > *:not(#question-loading-state) { display: none; }
+    .question-panel.is-loading #question-loading-state { display: flex; }
+
     /* ── SUBMIT CONFIRM MODAL ── */
     .modal h2 { margin-bottom: 8px; }
     .modal p  { color: var(--slate); margin-bottom: 20px; }
@@ -382,6 +386,49 @@
         order: -1;
       }
       .question-map { grid-template-columns: repeat(8, 1fr); }
+    }
+
+    /* Phone screens: tighten padding, wrap the header row, and stack the
+       question-meta and nav so badge/timer/choices/progress all fit. */
+    @media (max-width: 480px) {
+      .test-header {
+        flex-wrap: wrap;
+        row-gap: 8px;
+        padding: 10px 14px;
+        height: auto;
+        min-height: 58px;
+      }
+      .test-header .test-title {
+        flex: 1 1 100%;
+        font-size: 0.82rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .timer-block { padding: 5px 12px; }
+      .timer-display { font-size: 0.9rem; min-width: 46px; letter-spacing: 1px; }
+      .header-actions { gap: 6px; }
+      .header-actions .btn-sm { padding: 6px 10px; font-size: 0.72rem; }
+
+      .test-body { padding: 12px; gap: 12px; }
+      .sidebar { padding: 14px; }
+      .question-map { grid-template-columns: repeat(6, 1fr); gap: 5px; }
+
+      .question-panel { padding: 18px; min-height: 340px; }
+
+      .question-meta { flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+      .question-actions-top { width: 100%; }
+      .question-actions-top .btn { width: 100%; }
+
+      .question-text { font-size: 0.98rem; margin-bottom: 20px; }
+      .question-text pre { font-size: 0.75rem; padding: 12px 14px; }
+
+      .choice-btn { padding: 12px 14px; font-size: 0.88rem; gap: 10px; }
+      .choice-letter { min-width: 24px; height: 24px; font-size: 0.72rem; }
+
+      .question-nav { flex-direction: column; gap: 10px; align-items: stretch; }
+      .nav-left, .nav-right { width: 100%; }
+      .nav-left .btn, .nav-right .btn { width: 100%; }
     }
   </style>
 </head>
@@ -478,6 +525,12 @@
     <!-- ── RIGHT: Question Panel ── -->
     <div class="question-panel" id="question-panel" role="region" aria-label="Current question">
 
+      <!-- Loading state: replaces the panel content while a question is being fetched. -->
+      <div class="question-loading" id="question-loading-state" hidden aria-live="polite">
+        <div class="spinner" role="status" aria-label="Loading"></div>
+        <span>Loading question...</span>
+      </div>
+
       <!-- Question metadata row -->
       <div class="question-meta">
         <span class="question-counter" id="question-counter">
@@ -505,11 +558,7 @@
         blocks. We'll render them as <pre> tags here.
       -->
       <div class="question-text" id="question-text" aria-live="polite">
-        <!-- PLACEHOLDER: Loaded by loadQuestion() -->
-        <div class="question-loading">
-          <div class="spinner"></div>
-          <span>Loading question...</span>
-        </div>
+        <!-- Populated by loadQuestion(); panel-level loading state shown while fetching. -->
       </div>
 
       <!-- Answer choices — populated by JS -->
@@ -686,6 +735,11 @@
     ];
 
     // ── INIT ───────────────────────────────────────────────────
+    // isTestActive gates the beforeunload warning. Set true once the
+    // test has loaded, and cleared on submit/exit so the prompt doesn't
+    // fire during our own programmatic navigation.
+    let isTestActive = false;
+
     window.addEventListener('DOMContentLoaded', () => {
       // PLACEHOLDER: Replace with real API fetch
       // Integration Team: GET /api/questions?testId={testState.testId}
@@ -699,6 +753,19 @@
 
       // Update total count display
       document.getElementById('total-count').textContent = testState.totalQuestions;
+
+      isTestActive = true;
+    });
+
+    // Warn before closing/navigating away while a test is in progress.
+    // Modern browsers show their own generic text; we still set returnValue
+    // so older browsers display our message.
+    window.addEventListener('beforeunload', (e) => {
+      if (!isTestActive) return;
+      const msg = 'Your test is in progress — are you sure you want to leave?';
+      e.preventDefault();
+      e.returnValue = msg;
+      return msg;
     });
 
     // ── PER-QUESTION TIMER ─────────────────────────────────────
@@ -739,12 +806,26 @@
       btn.textContent = testState.isPaused ? '▶ Resume' : '⏸ Pause';
     }
 
+    // ── LOADING STATE ──────────────────────────────────────────
+    // Panel-level spinner shown while a question is being fetched.
+    // Integration Team: call showQuestionLoading() before the API
+    // request and hideQuestionLoading() once rendering completes.
+    function showQuestionLoading() {
+      document.getElementById('question-panel').classList.add('is-loading');
+      document.getElementById('question-loading-state').hidden = false;
+    }
+    function hideQuestionLoading() {
+      document.getElementById('question-panel').classList.remove('is-loading');
+      document.getElementById('question-loading-state').hidden = true;
+    }
+
     // ── QUESTION RENDERING ─────────────────────────────────────
     function loadQuestion(index) {
+      showQuestionLoading();
       testState.currentQuestion = index;
       testState.previewChoice   = null; // fresh question, no pending selection
       const q = testState.questions[index];
-      if (!q) return;
+      if (!q) { hideQuestionLoading(); return; }
 
       // Update counter
       document.getElementById('question-counter').textContent =
@@ -773,6 +854,7 @@
 
       // Refresh question map + kick off the per-question countdown
       renderQuestionMap();
+      hideQuestionLoading();
       startTimer();
     }
 
@@ -997,6 +1079,7 @@
      */
     function submitTest() {
       clearInterval(testState.timerInterval);
+      isTestActive = false; // suppress the beforeunload warning for our own nav
       closeSubmitModal();
 
       const payload = {
@@ -1018,6 +1101,7 @@
     function confirmExit() {
       if (confirm('Are you sure you want to exit? Your progress will be lost.')) {
         clearInterval(testState.timerInterval);
+        isTestActive = false; // user already confirmed; don't double-prompt
         sessionStorage.removeItem('activeTestId');
         window.location.href = 'dashboard.html';
       }
@@ -1026,6 +1110,41 @@
     // Close modal on overlay click
     document.getElementById('submit-modal').addEventListener('click', function(e) {
       if (e.target === this) closeSubmitModal();
+    });
+
+    // ── KEYBOARD SHORTCUTS ─────────────────────────────────────
+    // 1/2/3/4 select choice A/B/C/D on the current question.
+    // Enter commits the selected answer (equivalent to clicking Next).
+    // Enter requires a pending selection — once the answer is committed,
+    // loadQuestion() resets previewChoice to null, so a stray Enter press
+    // can't re-trigger a submit on the question we just moved past.
+    document.addEventListener('keydown', (e) => {
+      // Don't hijack keys while the student is typing in a form field.
+      const tgt = e.target;
+      if (tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA' || tgt.isContentEditable)) return;
+
+      // Ignore while the submit modal is open or the question is still loading.
+      const modalOpen = document.getElementById('submit-modal').classList.contains('open');
+      const isLoading = document.getElementById('question-panel').classList.contains('is-loading');
+      if (modalOpen || isLoading) return;
+
+      const keyToChoice = { '1': 'A', '2': 'B', '3': 'C', '4': 'D' };
+      if (keyToChoice[e.key]) {
+        const btn = document.querySelector(`.choice-btn[data-choice="${keyToChoice[e.key]}"]`);
+        if (btn) {
+          e.preventDefault();
+          btn.click();
+        }
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        // Only submit if a choice is currently previewed but not yet committed.
+        if (testState.previewChoice !== null) {
+          e.preventDefault();
+          commitAndAdvance();
+        }
+      }
     });
 
   </script>

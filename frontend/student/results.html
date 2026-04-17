@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Results — Adaptive Test Engine</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="auth.js"></script>
+  <script>
+    // Session guard: bounce to login if no session.
+    // Runs before <body> paints so unauthorized users never see the results.
+    (function () {
+      const session = window.requireSession && window.requireSession();
+      if (session && session.student) {
+        window.__STUDENT__ = session.student;
+      }
+    })();
+  </script>
+
+  <!--
+    results.html — Post-Test Score & Review Page
+    ─────────────────────────────────────────────────────────────
+    PURPOSE   : Shows the student their score, time taken,
+                and a per-question breakdown after submitting.
+    GROUPS    : Data & Reporting Team: Populate from
+                GET /api/results/{resultId}
+                AI/Question Bank: Show which questions were
+                AI-adaptive and at what difficulty level.
+    ─────────────────────────────────────────────────────────────
+  -->
+
+  <style>
+    .page-wrapper { display: flex; flex-direction: column; min-height: 100vh; }
+    .main-content { flex: 1; padding: 40px 0 60px; }
+
+    /* Score hero card */
+    .score-hero {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      color: var(--white);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: center;
+      margin-bottom: 32px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .score-hero h1 { color: var(--white); margin-bottom: 6px; font-size: 1.6rem; }
+    .score-hero .meta { color: var(--slate-light); font-size: 0.85rem; }
+
+    /* Big score circle */
+    .score-circle {
+      width: 110px; height: 110px;
+      border-radius: 50%;
+      border: 4px solid var(--accent);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(201, 168, 76, 0.1);
+    }
+    .score-circle .score-pct {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .score-circle .score-label { font-size: 0.7rem; color: var(--slate-light); letter-spacing: 0.5px; margin-top: 2px; }
+
+    /* Stats row */
+    .result-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+
+    /* Review list */
+    .review-item {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 12px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .review-num {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .review-num.correct { background: #d4edda; color: var(--success); }
+    .review-num.wrong   { background: #f8d7da; color: var(--danger); }
+    .review-num.skipped { background: var(--off-white); color: var(--slate); }
+
+    .review-question { font-size: 0.9rem; color: var(--navy); line-height: 1.5; }
+    .review-answer   { font-size: 0.8rem; margin-top: 6px; color: var(--slate); }
+    .review-answer strong { color: var(--success); }
+    .review-answer .wrong-choice { color: var(--danger); text-decoration: line-through; }
+
+    @media (max-width: 700px) {
+      .score-hero { grid-template-columns: 1fr; text-align: center; }
+      .score-circle { margin: 0 auto; }
+    }
+  </style>
+</head>
+<body class="page-wrapper">
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="logo">Adaptive <span>Test&nbsp;Engine</span></div>
+    <div class="user-badge">
+      <span class="hide-mobile" data-bind="student-name">Jane Student</span>
+      <div class="avatar">JS</div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+
+      <!-- Score Hero -->
+      <!--
+        Data & Reporting Team: Populate from GET /api/results/{id}
+        Fields: testName, score, correctCount, totalQuestions,
+                timeTaken, adaptiveLevelChange
+      -->
+      <div class="score-hero" data-widget="score-hero">
+        <div>
+          <h1>Test Complete</h1>
+          <p class="meta" data-bind="test-name">Sorting Algorithms &nbsp;|&nbsp; Apr 16, 2026</p>
+          <div style="margin-top:18px; display:flex; gap:24px; flex-wrap:wrap;">
+            <div>
+              <div style="color:var(--accent); font-weight:700; font-size:1.1rem" data-bind="correct-count">11 / 15</div>
+              <div style="color:var(--slate-light); font-size:0.78rem">Correct</div>
+            </div>
+            <div>
+              <div style="color:var(--white); font-weight:700; font-size:1.1rem" data-bind="time-taken">18:42</div>
+              <div style="color:var(--slate-light); font-size:0.78rem">Time Taken</div>
+            </div>
+            <div>
+              <div style="color:var(--white); font-weight:700; font-size:1.1rem" data-bind="level-change">Level 3 → 4</div>
+              <div style="color:var(--slate-light); font-size:0.78rem">Adaptive Level</div>
+            </div>
+          </div>
+        </div>
+        <div class="score-circle" data-bind="score-pct">
+          <span class="score-pct">73%</span>
+          <span class="score-label">SCORE</span>
+        </div>
+      </div>
+
+      <!-- Breakdown by topic -->
+      <div class="section-heading">
+        <h2>Topic Breakdown</h2>
+      </div>
+      <div class="result-stats" data-widget="topic-stats">
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:1.5rem">85%</div>
+          <div class="stat-label">Merge Sort</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:1.5rem">60%</div>
+          <div class="stat-label">Quick Sort</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:1.5rem">80%</div>
+          <div class="stat-label">Time Complexity</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:1.5rem">67%</div>
+          <div class="stat-label">Space Complexity</div>
+        </div>
+      </div>
+
+      <!-- Question Review -->
+      <div class="section-heading">
+        <h2>Question Review</h2>
+        <a href="dashboard.html" class="btn btn-primary btn-sm">Back to Dashboard</a>
+      </div>
+
+      <!--
+        Data & Reporting Team: Render each question result.
+        Each item needs: questionText, studentAnswer,
+        correctAnswer, isCorrect, difficulty
+        data-result attributes are hooks for future review tools.
+      -->
+      <div id="review-list" data-widget="review-list">
+
+        <!-- PLACEHOLDER review items -->
+        <div class="review-item" data-question-id="Q-001" data-correct="true">
+          <div class="review-num correct">1</div>
+          <div>
+            <div class="review-question">
+              What is the time complexity of merge sort in the average case?
+            </div>
+            <div class="review-answer">
+              Your answer: <strong>B — O(n log n)</strong> ✓ Correct
+            </div>
+          </div>
+          <span class="badge badge-success">✓</span>
+        </div>
+
+        <div class="review-item" data-question-id="Q-002" data-correct="false">
+          <div class="review-num wrong">2</div>
+          <div>
+            <div class="review-question">
+              Which sorting algorithm is most efficient when the input array is already nearly sorted?
+            </div>
+            <div class="review-answer">
+              Your answer: <span class="wrong-choice">A — Merge Sort</span>
+              &nbsp;|&nbsp; Correct: <strong>C — Insertion Sort</strong>
+            </div>
+          </div>
+          <span class="badge badge-danger">✗</span>
+        </div>
+
+        <div class="review-item" data-question-id="Q-003" data-correct="true">
+          <div class="review-num correct">3</div>
+          <div>
+            <div class="review-question">
+              What is the worst-case space complexity of in-place Quicksort due to recursion stack depth?
+            </div>
+            <div class="review-answer">
+              Your answer: <strong>C — O(n)</strong> ✓ Correct
+            </div>
+          </div>
+          <span class="badge badge-success">✓</span>
+        </div>
+
+        <div class="alert alert-info" style="margin-top: 12px;">
+          📊 Full question-by-question review will be available here once the Data &amp; Reporting team connects the results API.
+        </div>
+
+      </div>
+
+      <div style="display:flex; gap:12px; margin-top:32px; justify-content:flex-end; flex-wrap:wrap;">
+        <button class="btn btn-outline" data-action="retake-test" onclick="retakeTest()">Retake Test</button>
+        <a href="dashboard.html" class="btn btn-primary btn-lg">Back to Dashboard →</a>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    Adaptive Test Engine &mdash; AP Computer Science Program &nbsp;|&nbsp; Academic Year 2025–26
+  </footer>
+
+  <script>
+    function retakeTest() {
+      const testId = JSON.parse(sessionStorage.getItem('lastResult') || '{}').testId;
+      if (testId) {
+        sessionStorage.setItem('activeTestId', testId);
+        window.location.href = 'test.html';
+      } else {
+        window.location.href = 'dashboard.html';
+      }
+    }
+  </script>
+
+</body>
+</html>

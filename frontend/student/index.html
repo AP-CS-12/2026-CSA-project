@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — AP CS Adaptive Testing Platform</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Google Identity Services. Safe to load even before CLIENT_ID is set;
+       auth.js only calls google.accounts.id.initialize() when CLIENT_ID
+       has been swapped in, so no network auth request fires until then. -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="auth.js" defer></script>
+
+  <!--
+    index.html — Student Login Page
+    ─────────────────────────────────────────────────────────────
+    PURPOSE  : Entry point for all students. Handles Google OAuth
+               sign-in (placeholder) and routes to dashboard.html.
+    GROUPS   : Front/Back Integration team: hook up the Google
+               Sign-In button's data-action="google-signin" and
+               the fallback form's POST endpoint.
+    DB Team  : Session token should be stored after successful
+               login and sent as a header on all subsequent API calls.
+    ─────────────────────────────────────────────────────────────
+  -->
+
+  <style>
+    /* ── Login-page-specific layout ── */
+    body {
+      background: var(--navy);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Subtle grid texture on dark background */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .login-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    /* ── Branding strip on the left ── */
+    .login-brand {
+      max-width: 420px;
+      padding-right: 60px;
+      color: var(--white);
+    }
+
+    .login-brand .platform-name {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+
+    .login-brand .platform-name span { color: var(--accent); }
+
+    .login-brand p {
+      color: var(--slate-light);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+
+    /* Feature pills */
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .feature-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--slate-light);
+      font-size: 0.875rem;
+    }
+    .feature-list li::before {
+      content: '✓';
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--navy);
+      font-size: 0.7rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── Login card ── */
+    .login-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: var(--shadow-lg);
+      border-top: 4px solid var(--accent);
+    }
+
+    .login-card h2 {
+      font-size: 1.4rem;
+      margin-bottom: 6px;
+    }
+
+    .login-card .subtitle {
+      font-size: 0.85rem;
+      color: var(--slate);
+      margin-bottom: 28px;
+    }
+
+    /* Google Sign-In button */
+    .btn-google {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 11px 20px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--white);
+      color: var(--navy);
+      font-family: var(--font-body);
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s var(--ease);
+      box-shadow: var(--shadow-sm);
+    }
+    .btn-google:hover {
+      border-color: var(--navy);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+    .btn-google svg { flex-shrink: 0; }
+
+    /* Divider with text */
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0;
+      color: var(--slate-light);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    .or-divider::before,
+    .or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Fallback form */
+    .login-form { display: flex; flex-direction: column; gap: 16px; }
+
+    .login-form .form-group input { width: 100%; }
+
+    .login-form .btn-primary {
+      width: 100%;
+      padding: 12px;
+      margin-top: 4px;
+    }
+
+    .forgot-link {
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--slate);
+      margin-top: 6px;
+    }
+    .forgot-link a { color: var(--navy); font-weight: 500; }
+
+    /* Security notice */
+    .security-note {
+      margin-top: 20px;
+      padding: 10px 14px;
+      background: var(--off-white);
+      border-radius: var(--radius);
+      font-size: 0.78rem;
+      color: var(--slate);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .security-note .icon { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* Footer inside login page */
+    .login-footer {
+      text-align: center;
+      padding: 20px;
+      color: var(--slate);
+      font-size: 0.78rem;
+    }
+
+    /* Responsive: stack on mobile */
+    @media (max-width: 860px) {
+      .login-brand { display: none; }
+      .login-wrapper { padding: 24px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════
+       MAIN LOGIN WRAPPER
+       Contains: branding column + login card
+  ══════════════════════════════════════════════ -->
+  <main class="login-wrapper">
+
+    <!-- LEFT: Branding / Marketing column -->
+    <div class="login-brand" aria-hidden="true">
+      <div class="platform-name">
+        Adaptive<br/>
+        <span>Test&nbsp;Engine</span>
+      </div>
+      <p>
+        An AI-powered exam platform that adjusts to your skill level
+        in real time — so every question you see is the right challenge.
+      </p>
+      <ul class="feature-list">
+        <li>Questions tailored to your performance</li>
+        <li>Secure, proctored test environment</li>
+        <li>Instant feedback and analytics</li>
+        <li>Synced with your teacher's gradebook</li>
+      </ul>
+    </div>
+
+    <!-- RIGHT: Login card -->
+    <div class="login-card" role="main">
+
+      <h2>Student Sign In</h2>
+      <p class="subtitle">Use your school Google account to continue.</p>
+
+      <!--
+        GIS button is rendered by auth.js into #google-signin-container
+        once CLIENT_ID has been configured. Until then, #google-signin-stub
+        shows the original styled button in a disabled state so the layout
+        is identical and switchover is a one-line CLIENT_ID edit.
+      -->
+      <div id="google-signin-container" hidden></div>
+
+      <button
+        id="google-signin-stub"
+        class="btn-google"
+        data-action="google-signin"
+        onclick="handleGoogleSignIn(event)"
+        aria-label="Sign in with Google (not yet configured)"
+        title="Google Sign-In will activate once the client ID is configured"
+      >
+        <!-- Google "G" logo SVG -->
+        <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Sign in with Google
+      </button>
+
+      <!-- Fallback: email/password for non-Google accounts -->
+      <div class="or-divider">or sign in with ID</div>
+
+      <!--
+        FALLBACK FORM
+        ─────────────────────────────────────────────────
+        data-form="login" — Integration team: attach your
+        fetch() POST handler to this form.
+        Endpoint target: POST /api/auth/login
+        Expected body: { studentId, password }
+      -->
+      <form
+        class="login-form"
+        data-form="login"
+        onsubmit="handleLoginSubmit(event)"
+        novalidate
+      >
+        <div class="form-group">
+          <label for="student-id">Student ID</label>
+          <input
+            type="text"
+            id="student-id"
+            name="studentId"
+            placeholder="e.g. STU-2025-0042"
+            autocomplete="username"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" data-action="login-submit">
+          Sign In
+        </button>
+
+        <p class="forgot-link">
+          Forgot your password? <a href="#" data-action="forgot-password">Contact your teacher</a>
+        </p>
+      </form>
+
+      <!-- Security notice -->
+      <div class="security-note" role="note">
+        <span class="icon">🔒</span>
+        <span>
+          This is a secure testing environment. Do not share your credentials.
+          Your activity is logged for academic integrity purposes.
+        </span>
+      </div>
+
+    </div>
+    <!-- end .login-card -->
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="login-footer">
+    Adaptive Test Engine &mdash; AP Computer Science Program &nbsp;|&nbsp;
+    Academic Year 2025–26
+  </footer>
+
+  <!-- ══════════════════════════════════════════════
+       JAVASCRIPT — Login Logic (Placeholder)
+       ─────────────────────────────────────────────
+       Integration Team: Replace these stub functions
+       with real OAuth and API calls.
+  ══════════════════════════════════════════════ -->
+  <script>
+    // Stub handler — only runs in the narrow window before auth.js has
+    // rendered the real GIS button (or if CLIENT_ID hasn't been set).
+    function handleGoogleSignIn(e) {
+      e.preventDefault();
+      alert('Google Sign-In is still loading — please wait a moment and try again.');
+    }
+
+    /**
+     * handleLoginSubmit()
+     * ─────────────────────────────────────────────
+     * PLACEHOLDER: Replace with a real fetch() POST.
+     * Integration Team Endpoint: POST /api/auth/login
+     */
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      const form = e.target;
+      const studentId = form.studentId.value.trim();
+      const password  = form.password.value;
+
+      if (!studentId || !password) {
+        alert('Please fill in all fields.');
+        return;
+      }
+
+      // PLACEHOLDER — simulate successful login using the session shape auth.js expects.
+      sessionStorage.setItem('authToken', 'dev-' + studentId);
+      sessionStorage.setItem('student', JSON.stringify({
+        id: studentId,
+        name: studentId,
+        email: '',
+        avatar: '',
+      }));
+      window.location.href = 'dashboard.html';
+    }
+
+    // Google Sign-In initialization now lives in auth.js (autoInitGoogleAuth).
+    // Keeping it there guarantees the real GIS button renders regardless of
+    // whether auth.js or the cached GIS script loads first.
+  </script>
+
+</body>
+</html>

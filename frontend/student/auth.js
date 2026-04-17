@@ -92,11 +92,6 @@ async function onGoogleCredential(response) {
     return;
   }
 
-  if (!fallbackStudent.email || !fallbackStudent.email.toLowerCase().endsWith('@smus.ca')) {
-    alert('Please sign in with your school account (@smus.ca)');
-    return;
-  }
-
   try {
     const res = await fetch(`${AUTH_CONFIG.BACKEND_URL}/api/auth/google`, {
       method: 'POST',
@@ -139,7 +134,6 @@ function initGoogleAuth() {
     client_id: AUTH_CONFIG.CLIENT_ID,
     callback: onGoogleCredential,
     auto_select: false,
-    hosted_domain: 'smus.ca',
   });
 
   const container = document.getElementById('google-signin-container');

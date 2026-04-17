@@ -354,11 +354,11 @@
        with real OAuth and API calls.
   ══════════════════════════════════════════════ -->
   <script>
-    // Stub handler — only runs in the narrow window before auth.js has
-    // rendered the real GIS button (or if CLIENT_ID hasn't been set).
+    // Stub handler — only runs while CLIENT_ID is still the placeholder.
+    // Once auth.js swaps in the real GIS button, this button is hidden.
     function handleGoogleSignIn(e) {
       e.preventDefault();
-      alert('Google Sign-In is still loading — please wait a moment and try again.');
+      alert('Google Sign-In is not yet configured. Ask the integration team for the CLIENT_ID, then set it in auth.js.');
     }
 
     /**
@@ -389,10 +389,18 @@
       window.location.href = 'dashboard.html';
     }
 
-    // Google Sign-In initialization now lives in auth.js (autoInitGoogleAuth).
-    // Keeping it there guarantees the real GIS button renders regardless of
-    // whether auth.js or the cached GIS script loads first.
+    // Wait for the GIS script to finish loading, then hand off to auth.js.
+    // GIS exposes window.google.accounts.id once ready.
+    (function waitForGis() {
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        window.initGoogleAuth && window.initGoogleAuth();
+        return;
+      }
+      setTimeout(waitForGis, 50);
+    })();
   </script>
+
+<script src="integration.js"></script>
 
 </body>
 </html>

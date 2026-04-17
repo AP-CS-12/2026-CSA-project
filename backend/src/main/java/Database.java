@@ -1,7 +1,4 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.UUID;
 
 public class Database {
@@ -58,6 +55,61 @@ public class Database {
 
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+
+    public static long getOrCreateStudent(String name) {
+
+        try (Connection conn = getConnection()) {
+
+            PreparedStatement check = conn.prepareStatement(
+                    "SELECT id FROM students WHERE name = ?"
+            );
+            check.setString(1, name);
+
+            ResultSet rs = check.executeQuery();
+
+            if (rs.next()) {
+                return rs.getLong("id");
+            }
+
+            PreparedStatement insert = conn.prepareStatement(
+                    "INSERT INTO students (name) VALUES (?) RETURNING id"
+            );
+            insert.setString(1, name);
+
+            ResultSet inserted = insert.executeQuery();
+            inserted.next();
+
+            return inserted.getLong("id");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    public static long createSession(long studentId) {
+
+        String sql = """
+        INSERT INTO sessions (student_id, current_difficulty, status)
+        VALUES (?, 'easy', 'active')
+        RETURNING id
+    """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, studentId);
+
+            ResultSet rs = stmt.executeQuery();
+            rs.next();
+
+            return rs.getLong("id");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
         }
     }
 }

@@ -1,0 +1,1105 @@
+/// Merry Christmas Students, you did ho ho horrible!
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teacher Results — Adaptive Test Engine</title>
+  <style>
+    :root {
+      --navy: #0D1B2A;
+      --navy-mid: #1A2E45;
+      --navy-light: #243B55;
+      --slate: #6B7C93;
+      --slate-light: #A0AEBF;
+      --white: #FFFFFF;
+      --off-white: #F4F6F9;
+      --accent: #C9A84C;
+      --danger: #C0392B;
+      --success: #1E7E34;
+      --info: #2F5D8A;
+      --border: #D1D9E0;
+      --ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+      --radius: 6px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 4px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.18);
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+      --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background: var(--off-white);
+      color: var(--navy);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: var(--font-display);
+      line-height: 1.15;
+      color: var(--navy);
+    }
+    h1 { font-size: clamp(1.95rem, 4vw, 2.8rem); }
+    h2 { font-size: clamp(1.25rem, 2.2vw, 1.7rem); }
+    h3 { font-size: 1.08rem; }
+    p { color: var(--slate); font-size: 0.95rem; }
+    a { color: var(--navy-light); text-decoration: none; }
+    a:hover { color: var(--accent); }
+
+    .page-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .site-header {
+      background: var(--navy);
+      border-bottom: 2px solid var(--accent);
+      height: 62px;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-md);
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      color: var(--white);
+      font-size: 1.2rem;
+      letter-spacing: 0.4px;
+    }
+    .logo span { color: var(--accent); }
+
+    .main-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .main-nav a {
+      color: var(--slate-light);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.45px;
+      text-transform: uppercase;
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      transition: all 0.18s var(--ease);
+    }
+    .main-nav a:hover,
+    .main-nav a.active {
+      color: var(--white);
+      background: var(--navy-light);
+    }
+
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--slate-light);
+      font-size: 0.84rem;
+    }
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid var(--slate);
+      background: var(--navy-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1260px;
+      margin: 0 auto;
+      padding: 34px 24px 60px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+    .eyebrow {
+      font-size: 0.78rem;
+      letter-spacing: 0.65px;
+      text-transform: uppercase;
+      color: var(--slate);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      border-radius: var(--radius);
+      padding: 10px 18px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s var(--ease);
+      font-family: var(--font-body);
+    }
+    .btn-primary {
+      background: var(--navy);
+      color: var(--white);
+      box-shadow: var(--shadow-sm);
+    }
+    .btn-primary:hover { background: var(--navy-light); transform: translateY(-1px); }
+    .btn-accent {
+      background: var(--accent);
+      color: var(--navy);
+    }
+    .btn-accent:hover { filter: brightness(1.05); transform: translateY(-1px); }
+    .btn-outline {
+      background: transparent;
+      color: var(--navy);
+      border: 1.5px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--navy); background: var(--white); }
+    .btn-sm { padding: 8px 12px; font-size: 0.8rem; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.35px;
+      text-transform: uppercase;
+    }
+    .badge-accent { background: var(--accent); color: var(--navy); }
+    .badge-info { background: #e7eef7; color: var(--info); }
+    .badge-slate { background: #e6ebf0; color: var(--navy); }
+    .badge-success { background: #d4edda; color: var(--success); }
+    .badge-danger { background: #f8d7da; color: var(--danger); }
+    .badge-navy { background: var(--navy); color: var(--white); }
+
+    .hero {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+      color: var(--white);
+      border-radius: var(--radius-lg);
+      padding: 34px 36px;
+      box-shadow: var(--shadow-lg);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 22px;
+      align-items: center;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      right: -38px;
+      bottom: -42px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(201,168,76,0.08);
+      pointer-events: none;
+    }
+    .hero h1,
+    .hero p,
+    .hero .meta { color: var(--white); }
+    .hero .meta {
+      color: var(--slate-light);
+      font-size: 0.86rem;
+      margin-top: 8px;
+    }
+    .hero-topline {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 18px;
+      margin-top: 22px;
+    }
+    .hero-metric-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+    .hero-metric-label {
+      color: var(--slate-light);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.55px;
+      margin-top: 4px;
+    }
+    .score-circle {
+      width: 128px;
+      height: 128px;
+      border-radius: 50%;
+      border: 4px solid var(--accent);
+      background: rgba(201,168,76,0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+    .score-pct {
+      font-size: 2.25rem;
+      line-height: 1;
+      color: var(--accent);
+      font-family: var(--font-display);
+    }
+    .score-label {
+      color: var(--slate-light);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.6px;
+      margin-top: 5px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+    .stat-card,
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-card {
+      padding: 20px;
+      transition: box-shadow 0.18s var(--ease), transform 0.18s var(--ease);
+    }
+    .stat-card:hover,
+    .card:hover { box-shadow: var(--shadow-md); }
+    .stat-value {
+      font-size: 1.95rem;
+      font-family: var(--font-display);
+      line-height: 1;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .stat-label {
+      font-size: 0.76rem;
+      color: var(--slate);
+      letter-spacing: 0.55px;
+      text-transform: uppercase;
+    }
+    .stat-sub {
+      margin-top: 6px;
+      font-size: 0.78rem;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .card {
+      padding: 24px;
+    }
+    .table-card {
+      padding: 0;
+      overflow: hidden;
+    }
+    .card-header {
+      padding-bottom: 16px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .table-card .card-header {
+      padding: 24px 24px 0;
+      margin-bottom: 0;
+      border-bottom: none;
+    }
+    .card-title-block p {
+      margin-top: 4px;
+      font-size: 0.88rem;
+    }
+
+    .alert {
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      font-size: 0.88rem;
+      font-weight: 500;
+      border: 1px solid transparent;
+    }
+    .alert-warning {
+      background: #fff6df;
+      border-color: #efd99b;
+      color: #7d6009;
+    }
+    .alert-info {
+      background: #edf4fb;
+      border-color: #c8d9ea;
+      color: var(--info);
+    }
+
+    .mini-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .mini-list li {
+      position: relative;
+      padding-left: 18px;
+      color: var(--navy);
+      font-size: 0.9rem;
+    }
+    .mini-list li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .progress-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .topic-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+    }
+    .topic-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 7px;
+      font-size: 0.88rem;
+      color: var(--navy);
+    }
+    .progress-bar-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: #e8edf3;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--navy) 0%, var(--accent) 100%);
+    }
+    .progress-bar-fill.low { background: linear-gradient(90deg, #b83b2f 0%, #dd6b5d 100%); }
+    .progress-bar-fill.mid { background: linear-gradient(90deg, #876727 0%, #c9a84c 100%); }
+
+    .distribution-wrap {
+      display: grid;
+      gap: 12px;
+    }
+    .dist-row {
+      display: grid;
+      grid-template-columns: 86px minmax(0, 1fr) 48px;
+      gap: 12px;
+      align-items: center;
+    }
+    .dist-label,
+    .dist-count {
+      font-size: 0.84rem;
+      color: var(--navy);
+      font-weight: 600;
+    }
+    .dist-bar-track {
+      height: 12px;
+      background: #e8edf3;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .dist-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--navy) 0%, var(--accent) 100%);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      padding: 18px 24px 24px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+    thead tr {
+      background: var(--navy);
+      color: var(--white);
+    }
+    th, td {
+      text-align: left;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      vertical-align: top;
+    }
+    th {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.45px;
+      font-weight: 700;
+    }
+    tbody tr:hover { background: var(--off-white); }
+    td.secondary { color: var(--slate); }
+    .student-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .student-cell strong { color: var(--navy); }
+    .mono { font-family: var(--font-mono); }
+
+    .filter-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 0 24px 16px;
+    }
+    .chip {
+      border: 1.5px solid var(--border);
+      background: var(--white);
+      color: var(--navy);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s var(--ease);
+    }
+    .chip.active,
+    .chip:hover {
+      border-color: var(--navy);
+      background: var(--navy);
+      color: var(--white);
+    }
+
+    .footer {
+      margin-top: auto;
+      padding: 18px 24px 26px;
+      text-align: center;
+      color: var(--slate);
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .section-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-metrics {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .site-header {
+        padding: 0 16px;
+        height: auto;
+        min-height: 62px;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+      .main-nav { order: 3; width: 100%; }
+      .container { padding: 20px 14px 40px; }
+      .hero { padding: 24px 20px; }
+      .hero-metrics { grid-template-columns: 1fr 1fr; }
+      .score-circle { width: 110px; height: 110px; }
+      .score-pct { font-size: 1.9rem; }
+      .dist-row { grid-template-columns: 74px minmax(0, 1fr) 36px; gap: 8px; }
+      .card { padding: 18px; }
+      .table-wrap { padding: 12px 14px 18px; }
+      .filter-row { padding: 0 14px 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="site-header">
+      <div class="logo">Adaptive <span>Test&nbsp;Engine</span></div>
+
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#" class="active">Results Center</a>
+        <a href="#">Class Performance</a>
+        <a href="#">Item Analysis</a>
+        <a href="#">Gradebook</a>
+      </nav>
+
+      <div class="user-badge">
+        <span id="header-name">Ms. Rivera</span>
+        <div class="avatar" id="header-avatar">MR</div>
+        <button class="btn btn-sm btn-outline" type="button">Sign Out</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="toolbar">
+        <div>
+          <div class="eyebrow">Teacher Results Experience</div>
+          <h1 id="page-title">Class Results Overview</h1>
+          <p id="page-subtitle">A class-wide dashboard that combines all student scores, topic mastery, item analysis, and AI review.</p>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-outline" type="button">Export CSV</button>
+          <button class="btn btn-outline" type="button">Download PDF</button>
+          <button class="btn btn-accent" type="button">Sync to Gradebook</button>
+        </div>
+      </div>
+
+      <section class="hero">
+        <div>
+          <div class="hero-topline">
+            <span class="badge badge-accent" id="hero-course">AP Computer Science A</span>
+            <span class="badge badge-info" id="hero-assessment">Algorithms Unit Assessment</span>
+            <span class="badge badge-slate">Teacher Dashboard</span>
+          </div>
+          <h1 id="hero-title">Combined Student Results</h1>
+          <p class="meta" id="hero-meta">Apr 17, 2026 · Section A · 28 students</p>
+          <p id="hero-summary" style="margin-top:10px; max-width: 760px;"></p>
+
+          <div class="hero-metrics">
+            <div>
+              <div class="hero-metric-value" id="hero-students">28</div>
+              <div class="hero-metric-label">Students</div>
+            </div>
+            <div>
+              <div class="hero-metric-value" id="hero-completion">96%</div>
+              <div class="hero-metric-label">Completion Rate</div>
+            </div>
+            <div>
+              <div class="hero-metric-value" id="hero-pass">82%</div>
+              <div class="hero-metric-label">Pass Rate</div>
+            </div>
+            <div>
+              <div class="hero-metric-value" id="hero-spread">31 pts</div>
+              <div class="hero-metric-label">Score Spread</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="score-circle" aria-label="Class average score">
+          <div class="score-pct" id="hero-average">74%</div>
+          <div class="score-label">Class Avg</div>
+        </div>
+      </section>
+
+      <section class="stats-grid" id="top-stats"></section>
+
+      <section class="section-grid">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-block">
+              <h2>AI Class Review</h2>
+              <p>Automatic summary of the cohort rather than a single-student report.</p>
+            </div>
+            <span class="badge badge-accent">AI Brief</span>
+          </div>
+
+          <div class="alert alert-warning" id="teacher-alert" style="margin-bottom: 16px;"></div>
+
+          <div style="display:grid; gap:16px;">
+            <div>
+              <h3 style="margin-bottom:8px;">Summary</h3>
+              <p id="ai-summary"></p>
+            </div>
+            <div>
+              <h3 style="margin-bottom:8px;">Recommended Actions</h3>
+              <ul class="mini-list" id="teacher-actions"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-block">
+              <h2>Score Distribution</h2>
+              <p>How the entire class scored across proficiency bands.</p>
+            </div>
+            <span class="badge badge-info">Cohort View</span>
+          </div>
+          <div class="distribution-wrap" id="distribution"></div>
+        </div>
+      </section>
+
+      <section class="section-grid">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-block">
+              <h2>Topic Mastery Across Class</h2>
+              <p>Average performance by topic using all student attempts.</p>
+            </div>
+            <span class="badge badge-navy">Class Topics</span>
+          </div>
+          <div class="progress-stack" id="topic-mastery"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-block">
+              <h2>Intervention Groups</h2>
+              <p>Students grouped by performance threshold and AI risk signals.</p>
+            </div>
+            <span class="badge badge-accent">Planning</span>
+          </div>
+          <ul class="mini-list" id="group-summary"></ul>
+        </div>
+      </section>
+
+      <section class="card table-card" style="margin-bottom:18px;">
+        <div class="card-header">
+          <div class="card-title-block">
+            <h2>Student Results Table</h2>
+            <p>Combined results from all students for this assessment.</p>
+          </div>
+          <span class="badge badge-info">Roster</span>
+        </div>
+
+        <div class="filter-row" id="student-filters">
+          <button class="chip active" data-filter="all">All Students</button>
+          <button class="chip" data-filter="high">High Performers</button>
+          <button class="chip" data-filter="mid">On Track</button>
+          <button class="chip" data-filter="risk">Needs Support</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Score</th>
+                <th>Band</th>
+                <th>Adaptive Finish</th>
+                <th>Time</th>
+                <th>Focus Area</th>
+                <th>AI Flag</th>
+              </tr>
+            </thead>
+            <tbody id="student-results-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card table-card">
+        <div class="card-header">
+          <div class="card-title-block">
+            <h2>Question / Item Analysis</h2>
+            <p>Combined question-level performance from the whole class.</p>
+          </div>
+          <span class="badge badge-slate">Assessment Diagnostics</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>Topic</th>
+                <th>Correct Rate</th>
+                <th>Avg Difficulty</th>
+                <th>Misconception Signal</th>
+                <th>Teacher Action</th>
+              </tr>
+            </thead>
+            <tbody id="item-analysis-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">Adaptive Test Engine — Teacher Results Prototype</footer>
+  </div>
+
+  <script>
+    const DEMO_CLASS_RESULTS = {
+      teacher: { name: 'Ms. Rivera', initials: 'MR' },
+      course: 'AP Computer Science A',
+      assessment: 'Algorithms Unit Assessment',
+      section: 'Section A',
+      date: 'Apr 17, 2026',
+      passThreshold: 60,
+      topicAverages: [
+        { name: 'Merge Sort', score: 82, mastery: 'Strong' },
+        { name: 'Quick Sort', score: 68, mastery: 'Developing' },
+        { name: 'Time Complexity', score: 77, mastery: 'Strong' },
+        { name: 'Space Complexity', score: 61, mastery: 'Watch' },
+        { name: 'Algorithm Selection', score: 58, mastery: 'Intervene' }
+      ],
+      students: [
+        { name: 'Ava Chen', id: 'S-104', score: 93, level: 5, time: '16:42', focus: 'None urgent', risk: 'Low', band: 'Exceeding' },
+        { name: 'Mason Patel', id: 'S-118', score: 88, level: 5, time: '18:10', focus: 'Quick Sort edge cases', risk: 'Low', band: 'Exceeding' },
+        { name: 'Noah Singh', id: 'S-121', score: 84, level: 4, time: '19:34', focus: 'Space Complexity', risk: 'Low', band: 'Meeting' },
+        { name: 'Sophia Li', id: 'S-102', score: 81, level: 4, time: '20:11', focus: 'Algorithm Selection', risk: 'Medium', band: 'Meeting' },
+        { name: 'Isabella Martin', id: 'S-109', score: 79, level: 4, time: '21:09', focus: 'Partition logic', risk: 'Medium', band: 'Meeting' },
+        { name: 'Ethan Brown', id: 'S-131', score: 77, level: 4, time: '17:58', focus: 'Space Complexity', risk: 'Medium', band: 'Meeting' },
+        { name: 'Lucas Wang', id: 'S-110', score: 76, level: 4, time: '18:42', focus: 'Algorithm Selection', risk: 'Medium', band: 'Meeting' },
+        { name: 'Emily Garcia', id: 'S-115', score: 74, level: 4, time: '22:04', focus: 'Quick Sort partitioning', risk: 'Medium', band: 'Meeting' },
+        { name: 'James Wilson', id: 'S-126', score: 72, level: 4, time: '19:26', focus: 'Recurrence recognition', risk: 'Medium', band: 'Meeting' },
+        { name: 'Charlotte Lee', id: 'S-119', score: 71, level: 3, time: '23:18', focus: 'Algorithm Selection', risk: 'Medium', band: 'Meeting' },
+        { name: 'Benjamin Kim', id: 'S-132', score: 69, level: 3, time: '24:02', focus: 'Space Complexity', risk: 'Medium', band: 'Developing' },
+        { name: 'Amelia White', id: 'S-123', score: 68, level: 3, time: '20:37', focus: 'Quick Sort worst case', risk: 'Medium', band: 'Developing' },
+        { name: 'Elijah Davis', id: 'S-111', score: 66, level: 3, time: '25:44', focus: 'In-place tradeoffs', risk: 'Medium', band: 'Developing' },
+        { name: 'Harper Moore', id: 'S-117', score: 64, level: 3, time: '21:40', focus: 'Merge memory cost', risk: 'Medium', band: 'Developing' },
+        { name: 'Alexander Clark', id: 'S-134', score: 62, level: 3, time: '26:30', focus: 'Algorithm Selection', risk: 'Medium', band: 'Developing' },
+        { name: 'Mia Young', id: 'S-112', score: 61, level: 3, time: '24:58', focus: 'Recursion depth', risk: 'Medium', band: 'Developing' },
+        { name: 'Henry Scott', id: 'S-135', score: 58, level: 2, time: '27:19', focus: 'Big-O interpretation', risk: 'High', band: 'Needs Support' },
+        { name: 'Evelyn Green', id: 'S-108', score: 56, level: 2, time: '28:21', focus: 'Quick Sort partitioning', risk: 'High', band: 'Needs Support' },
+        { name: 'Michael Hall', id: 'S-125', score: 54, level: 2, time: '26:07', focus: 'Space Complexity', risk: 'High', band: 'Needs Support' },
+        { name: 'Abigail Allen', id: 'S-130', score: 52, level: 2, time: '29:14', focus: 'Algorithm Selection', risk: 'High', band: 'Needs Support' },
+        { name: 'Daniel King', id: 'S-120', score: 49, level: 2, time: '23:47', focus: 'Recurrence patterns', risk: 'High', band: 'Needs Support' },
+        { name: 'Ella Wright', id: 'S-113', score: 48, level: 2, time: '30:00', focus: 'Time Complexity', risk: 'High', band: 'Needs Support' },
+        { name: 'Sebastian Adams', id: 'S-127', score: 46, level: 2, time: '27:56', focus: 'Merge vs Quick comparison', risk: 'High', band: 'Needs Support' },
+        { name: 'Scarlett Baker', id: 'S-122', score: 45, level: 2, time: '28:43', focus: 'Algorithm Selection', risk: 'High', band: 'Needs Support' },
+        { name: 'Jack Nelson', id: 'S-114', score: 43, level: 1, time: '22:18', focus: 'Foundational vocabulary', risk: 'High', band: 'Needs Support' },
+        { name: 'Lily Carter', id: 'S-124', score: 41, level: 1, time: '21:04', focus: 'Big-O basics', risk: 'High', band: 'Needs Support' },
+        { name: 'Owen Mitchell', id: 'S-129', score: 38, level: 1, time: '19:31', focus: 'Core sort identification', risk: 'High', band: 'Needs Support' },
+        { name: 'Grace Perez', id: 'S-133', score: 0, level: 0, time: '—', focus: 'No submission', risk: 'High', band: 'Missing' }
+      ],
+      items: [
+        { question: 'Q1', topic: 'Merge Sort', correctRate: 86, difficulty: 2.4, misconception: 'Low confusion on recurrence form.', action: 'Keep as anchor item.' },
+        { question: 'Q2', topic: 'Algorithm Selection', correctRate: 44, difficulty: 3.8, misconception: 'Students confuse asymptotic speed with always-best choice.', action: 'Reteach choosing algorithms by input constraints.' },
+        { question: 'Q3', topic: 'Space Complexity', correctRate: 57, difficulty: 3.1, misconception: 'Many mixed recursion-stack cost with auxiliary array cost.', action: 'Model memory accounting on board.' },
+        { question: 'Q4', topic: 'Time Complexity', correctRate: 73, difficulty: 2.7, misconception: 'Mostly secure, but slower readers missed wording.', action: 'Leave in next spiral review.' },
+        { question: 'Q5', topic: 'Quick Sort', correctRate: 49, difficulty: 3.9, misconception: 'Weakness centered on worst-case pivot reasoning.', action: 'Run a short partition walkthrough with contrasting inputs.' },
+        { question: 'Q6', topic: 'Algorithm Selection', correctRate: 39, difficulty: 4.2, misconception: 'Transfer task exposed shallow understanding of tradeoffs.', action: 'Assign comparison practice set before next assessment.' }
+      ]
+    };
+
+    function readTeacherData() {
+      try {
+        const raw = sessionStorage.getItem('teacherResults') || sessionStorage.getItem('classResults');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.students) && parsed.students.length) return parsed;
+        }
+      } catch (err) {
+        console.warn('Could not parse teacher/class results from sessionStorage.', err);
+      }
+      return DEMO_CLASS_RESULTS;
+    }
+
+    const data = readTeacherData();
+
+    function average(values) {
+      return values.length ? values.reduce((sum, n) => sum + n, 0) / values.length : 0;
+    }
+
+    function median(values) {
+      if (!values.length) return 0;
+      const arr = [...values].sort((a, b) => a - b);
+      const mid = Math.floor(arr.length / 2);
+      return arr.length % 2 ? arr[mid] : (arr[mid - 1] + arr[mid]) / 2;
+    }
+
+    function initials(name) {
+      return name.split(' ').map(part => part[0]).slice(0, 2).join('').toUpperCase();
+    }
+
+    function scoreBand(score) {
+      if (score >= 85) return 'Exceeding';
+      if (score >= 70) return 'Meeting';
+      if (score >= 60) return 'Developing';
+      if (score > 0) return 'Needs Support';
+      return 'Missing';
+    }
+
+    function badgeClassForBand(band) {
+      if (band === 'Exceeding') return 'badge-success';
+      if (band === 'Meeting') return 'badge-info';
+      if (band === 'Developing') return 'badge-accent';
+      return 'badge-danger';
+    }
+
+    function toneClass(score) {
+      if (score >= 80) return '';
+      if (score >= 65) return 'mid';
+      return 'low';
+    }
+
+    function buildStats() {
+      const submitted = data.students.filter(s => s.score > 0);
+      const scores = submitted.map(s => s.score);
+      const avg = average(scores);
+      const med = median(scores);
+      const max = scores.length ? Math.max(...scores) : 0;
+      const min = scores.length ? Math.min(...scores) : 0;
+      const passRate = submitted.length ? (submitted.filter(s => s.score >= data.passThreshold).length / submitted.length) * 100 : 0;
+      const completionRate = data.students.length ? (submitted.length / data.students.length) * 100 : 0;
+      return {
+        submittedCount: submitted.length,
+        totalStudents: data.students.length,
+        average: avg,
+        median: med,
+        max,
+        min,
+        spread: max - min,
+        passRate,
+        completionRate,
+        highCount: data.students.filter(s => s.score >= 85).length,
+        supportCount: data.students.filter(s => s.score > 0 && s.score < data.passThreshold).length,
+        missingCount: data.students.filter(s => s.score === 0).length
+      };
+    }
+
+    const stats = buildStats();
+
+    function setText(id, value) {
+      const node = document.getElementById(id);
+      if (node) node.textContent = value;
+    }
+
+    function renderHeader() {
+      setText('header-name', data.teacher?.name || 'Teacher');
+      setText('header-avatar', data.teacher?.initials || initials(data.teacher?.name || 'Teacher'));
+      setText('page-title', `${data.section} Results Overview`);
+      setText('page-subtitle', `Teacher interface showing combined results for ${stats.totalStudents} students on this assessment.`);
+      setText('hero-course', data.course);
+      setText('hero-assessment', data.assessment);
+      setText('hero-title', 'Combined Student Results');
+      setText('hero-meta', `${data.date} · ${data.section} · ${stats.totalStudents} students`);
+      setText('hero-students', String(stats.totalStudents));
+      setText('hero-completion', `${Math.round(stats.completionRate)}%`);
+      setText('hero-pass', `${Math.round(stats.passRate)}%`);
+      setText('hero-spread', `${Math.round(stats.spread)} pts`);
+      setText('hero-average', `${Math.round(stats.average)}%`);
+
+      const strongest = [...data.topicAverages].sort((a, b) => b.score - a.score)[0];
+      const weakest = [...data.topicAverages].sort((a, b) => a.score - b.score)[0];
+      setText(
+        'hero-summary',
+        `${Math.round(stats.average)}% class average with ${stats.supportCount} students below the pass threshold. Strongest class topic: ${strongest.name}. Main reteach target: ${weakest.name}.`
+      );
+    }
+
+    function statCard(value, label, sub = '') {
+      return `
+        <div class="stat-card">
+          <div class="stat-value">${value}</div>
+          <div class="stat-label">${label}</div>
+          ${sub ? `<div class="stat-sub">${sub}</div>` : ''}
+        </div>
+      `;
+    }
+
+    function renderTopStats() {
+      const target = document.getElementById('top-stats');
+      if (!target) return;
+      target.innerHTML = [
+        statCard(`${Math.round(stats.median)}%`, 'Median Score', 'Less skewed than the average'),
+        statCard(`${Math.round(stats.max)}%`, 'Highest Score', 'Top end of cohort'),
+        statCard(`${Math.round(stats.min)}%`, 'Lowest Submitted', 'Excludes missing'),
+        statCard(`${stats.highCount}`, 'High Performers', '85% and above'),
+        statCard(`${stats.supportCount}`, 'Needs Support', `Below ${data.passThreshold}%`),
+        statCard(`${stats.missingCount}`, 'Missing / Incomplete', 'No valid submission')
+      ].join('');
+    }
+
+    function renderDistribution() {
+      const target = document.getElementById('distribution');
+      if (!target) return;
+      const buckets = [
+        { label: '90–100', count: data.students.filter(s => s.score >= 90).length },
+        { label: '80–89', count: data.students.filter(s => s.score >= 80 && s.score < 90).length },
+        { label: '70–79', count: data.students.filter(s => s.score >= 70 && s.score < 80).length },
+        { label: '60–69', count: data.students.filter(s => s.score >= 60 && s.score < 70).length },
+        { label: '< 60', count: data.students.filter(s => s.score > 0 && s.score < 60).length },
+        { label: 'Missing', count: data.students.filter(s => s.score === 0).length }
+      ];
+      const maxCount = Math.max(...buckets.map(b => b.count), 1);
+      target.innerHTML = buckets.map(bucket => `
+        <div class="dist-row">
+          <div class="dist-label">${bucket.label}</div>
+          <div class="dist-bar-track"><div class="dist-bar-fill" style="width:${(bucket.count / maxCount) * 100}%"></div></div>
+          <div class="dist-count">${bucket.count}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderAiSummary() {
+      const strongest = [...data.topicAverages].sort((a, b) => b.score - a.score)[0];
+      const weakest = [...data.topicAverages].sort((a, b) => a.score - b.score)[0];
+      const highRisk = data.students.filter(s => s.risk === 'High' && s.score > 0).length;
+      const nearThreshold = data.students.filter(s => s.score >= 55 && s.score < 65).length;
+
+      setText(
+        'teacher-alert',
+        `${highRisk} submitted students triggered high-risk support flags, and ${nearThreshold} more are hovering near the pass line. The class does not need broad reteaching of everything; it needs targeted reteaching around ${weakest.name}.`
+      );
+      setText(
+        'ai-summary',
+        `Across the full cohort, performance is strongest in ${strongest.name} and weakest in ${weakest.name}. The largest pattern is not raw vocabulary failure, but uneven transfer: many students can identify algorithm definitions, yet lose points when they must justify which algorithm best fits a constraint-heavy scenario.`
+      );
+
+      const actions = [
+        `Pull a small-group intervention for the ${highRisk} highest-risk students, prioritizing ${weakest.name.toLowerCase()} and worked examples.`,
+        `Use the ${nearThreshold} near-threshold students for a short check-in and one targeted reassessment task.`,
+        `Keep enrichment ready for the ${stats.highCount} high performers by giving comparison or optimization prompts instead of standard review.`
+      ];
+
+      const list = document.getElementById('teacher-actions');
+      if (list) list.innerHTML = actions.map(item => `<li>${item}</li>`).join('');
+    }
+
+    function renderTopicMastery() {
+      const target = document.getElementById('topic-mastery');
+      if (!target) return;
+      target.innerHTML = data.topicAverages.map(topic => `
+        <div class="topic-row">
+          <div>
+            <div class="topic-meta">
+              <strong>${topic.name}</strong>
+              <span>${topic.score}%</span>
+            </div>
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill ${toneClass(topic.score)}" style="width:${topic.score}%"></div>
+            </div>
+          </div>
+          <span class="badge ${badgeClassForBand(topic.score >= 80 ? 'Exceeding' : topic.score >= 65 ? 'Developing' : 'Needs Support')}">${topic.mastery}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderGroupSummary() {
+      const target = document.getElementById('group-summary');
+      if (!target) return;
+      const high = data.students.filter(s => s.score >= 85).length;
+      const onTrack = data.students.filter(s => s.score >= 60 && s.score < 85).length;
+      const support = data.students.filter(s => s.score > 0 && s.score < 60).length;
+      const missing = data.students.filter(s => s.score === 0).length;
+      target.innerHTML = [
+        `${high} students are ready for extension or enrichment tasks.`,
+        `${onTrack} students are broadly on track but still need targeted review in one topic area.`,
+        `${support} students need active intervention before the next cumulative assessment.`,
+        `${missing} students still need a make-up or follow-up submission.`
+      ].map(item => `<li>${item}</li>`).join('');
+    }
+
+    function studentFilterClass(filter, student) {
+      if (filter === 'all') return true;
+      if (filter === 'high') return student.score >= 85;
+      if (filter === 'mid') return student.score >= 60 && student.score < 85;
+      if (filter === 'risk') return student.score < 60 || student.risk === 'High' || student.score === 0;
+      return true;
+    }
+
+    function riskBadge(risk) {
+      if (risk === 'Low') return 'badge-success';
+      if (risk === 'Medium') return 'badge-accent';
+      return 'badge-danger';
+    }
+
+    function renderStudentTable(filter = 'all') {
+      const body = document.getElementById('student-results-body');
+      if (!body) return;
+      const rows = data.students
+        .filter(student => studentFilterClass(filter, student))
+        .sort((a, b) => b.score - a.score)
+        .map(student => `
+          <tr>
+            <td>
+              <div class="student-cell">
+                <strong>${student.name}</strong>
+                <span class="secondary mono">${student.id}</span>
+              </div>
+            </td>
+            <td><strong>${student.score === 0 ? '—' : `${student.score}%`}</strong></td>
+            <td><span class="badge ${badgeClassForBand(student.band || scoreBand(student.score))}">${student.band || scoreBand(student.score)}</span></td>
+            <td class="secondary">${student.level ? `Level ${student.level}` : '—'}</td>
+            <td class="secondary">${student.time || '—'}</td>
+            <td class="secondary">${student.focus}</td>
+            <td><span class="badge ${riskBadge(student.risk)}">${student.risk}</span></td>
+          </tr>
+        `).join('');
+      body.innerHTML = rows || `<tr><td colspan="7" class="secondary">No students match this filter.</td></tr>`;
+    }
+
+    function renderItemAnalysis() {
+      const body = document.getElementById('item-analysis-body');
+      if (!body) return;
+      body.innerHTML = data.items.map(item => `
+        <tr>
+          <td><strong>${item.question}</strong></td>
+          <td class="secondary">${item.topic}</td>
+          <td><strong>${item.correctRate}%</strong></td>
+          <td class="secondary">${item.difficulty.toFixed(1)}</td>
+          <td class="secondary">${item.misconception}</td>
+          <td class="secondary">${item.action}</td>
+        </tr>
+      `).join('');
+    }
+
+    function wireFilters() {
+      const chips = document.querySelectorAll('#student-filters .chip');
+      chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          chips.forEach(other => other.classList.remove('active'));
+          chip.classList.add('active');
+          renderStudentTable(chip.dataset.filter || 'all');
+        });
+      });
+    }
+
+    renderHeader();
+    renderTopStats();
+    renderDistribution();
+    renderAiSummary();
+    renderTopicMastery();
+    renderGroupSummary();
+    renderStudentTable();
+    renderItemAnalysis();
+    wireFilters();
+  </script>
+</body>
+</html>

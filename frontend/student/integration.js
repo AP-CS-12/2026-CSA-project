@@ -1,4 +1,4 @@
-const API_BASE_URL = "whatever it is";
+const API_BASE_URL = "http://localhost:8080";
 
 //for index.html (Login)
 async function handleLoginSubmit(event) {

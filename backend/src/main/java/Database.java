@@ -15,11 +15,11 @@ public class Database {
     // ─────────────────────────────────────────────
     // QUESTIONS
     // ─────────────────────────────────────────────
-    public static void insertQuestion(String topic, long difficulty, String jsonContent) {
+    public static void insertQuestion(String topic, long difficulty, String question, String answersjson, String correct_answer) {
 
         String sql = """
-                INSERT INTO questions (topic, difficulty, content)
-                VALUES (?, ?, ?::jsonb)
+                INSERT INTO questions (topic, difficulty, question, answersjson, correct_answer)
+                VALUES (?, ?, ?, ?::jsonb, ?)
                 """;
 
         try (Connection conn = getConnection();
@@ -27,7 +27,9 @@ public class Database {
 
             stmt.setString(1, topic);
             stmt.setLong(2, difficulty);
-            stmt.setString(3, jsonContent);
+            stmt.setString(3, question);
+            stmt.setString(4, answersjson);
+            stmt.setString(5, correct_answer);
 
             stmt.executeUpdate();
             System.out.println("Question inserted!");

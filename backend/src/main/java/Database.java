@@ -3,18 +3,26 @@ import java.sql.*;
 public class Database {
 
     private static final String URL =
-            "jdbc:postgresql://aws-1-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require";
+            "jdbc:postgresql://aws-1-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require";
 
     private static final String USER = System.getenv("DB_USER");
     private static final String PASS = System.getenv("DB_PASSWORD");
+
+    private static String requireEnv(String key) {
+        String value = System.getenv(key);
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("Missing environment variable: " + key);
+        }
+        return value;
+    }
 
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASS);
     }
 
-    // ─────────────────────────────────────────────
+    // ─────────────────────────────
     // QUESTIONS
-    // ─────────────────────────────────────────────
+    // ─────────────────────────────
     public static void insertQuestion(String topic, long difficulty, String question, String answersjson, String correct_answer) {
 
         String sql = """
@@ -32,16 +40,15 @@ public class Database {
             stmt.setString(5, correct_answer);
 
             stmt.executeUpdate();
-            System.out.println("Question inserted!");
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    // ─────────────────────────────────────────────
+    // ─────────────────────────────
     // STUDENTS
-    // ─────────────────────────────────────────────
+    // ─────────────────────────────
     public static long getOrCreateStudent(String name) {
 
         try (Connection conn = getConnection()) {
@@ -73,9 +80,9 @@ public class Database {
         }
     }
 
-    // ─────────────────────────────────────────────
+    // ─────────────────────────────
     // SESSIONS
-    // ─────────────────────────────────────────────
+    // ─────────────────────────────
     public static long createSession(long studentId) {
 
         String sql = """
@@ -98,5 +105,59 @@ public class Database {
             e.printStackTrace();
             return -1;
         }
+    }
+
+    // ─────────────────────────────
+    // CHAT MESSAGES (needed for Gemini memory)
+    // ─────────────────────────────
+    public static void saveMessage(long sessionId, String role, String content) {
+        String sql = """
+            INSERT INTO messages (session_id, role, content)
+            VALUES (?, ?, ?)
+        """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, sessionId);
+            stmt.setString(2, role);
+            stmt.setString(3, content);
+
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String getSessionHistory(long sessionId) {
+        String sql = """
+            SELECT role, content
+            FROM messages
+            WHERE session_id = ?
+            ORDER BY id ASC
+        """;
+
+        StringBuilder history = new StringBuilder();
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, sessionId);
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                history.append(rs.getString("role"))
+                        .append(": ")
+                        .append(rs.getString("content"))
+                        .append("\n");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return history.toString();
     }
 }

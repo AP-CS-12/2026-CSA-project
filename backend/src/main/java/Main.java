@@ -1,6 +1,8 @@
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
 import java.io.OutputStream;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import com.google.gson.Gson;
 
 public class Main {
@@ -65,7 +67,7 @@ public class Main {
         });
 
         // ─────────────────────────────
-        // CHAT (FIXED + GENERALIZED PROMPT)
+        // CHAT
         // ─────────────────────────────
         server.createContext("/api/chat", exchange -> {
 
@@ -90,24 +92,53 @@ public class Main {
             String topic = req.message;
 
             String prompt =
-                    "You are a strict JSON generator.\n" +
-                            "You MUST output ONLY valid JSON. No markdown. No explanation. No extra text.\n\n" +
-                            "Schema:\n" +
-                            "{\n" +
-                            "  \"topic\": string,\n" +
-                            "  \"difficulty\": integer (1-5),\n" +
-                            "  \"question\": string,\n" +
-                            "  \"answers\": {\"A\": string, \"B\": string, \"C\": string, \"D\": string},\n" +
-                            "  \"correct_answer\": \"A\" | \"B\" | \"C\" | \"D\"\n" +
-                            "}\n\n" +
-                            "Generate a question about: " + topic;
+                    """
+                    OUTPUT_FORMAT=JSON
+                    STRICT_MODE=true
+                    NO_TEXT_ALLOWED=true
+                
+                    SCHEMA:
+                    {
+                      "topic": "string",
+                      "difficulty": 1,
+                      "question": "string",
+                      "answers": {
+                        "A": "string",
+                        "B": "string",
+                        "C": "string",
+                        "D": "string"
+                      },
+                      "correct_answer": "A"
+                    }
+                
+                    RULES:
+                    - Output must match SCHEMA exactly
+                    - No additional keys
+                    - No explanation
+                    - No markdown
+                    - No backticks
+                    - Output starts with { and ends with }
+                
+                    INPUT:
+                    topic = %s
+                    """.formatted(topic);
 
             Gemini gemini = new Gemini();
             String rawReply = gemini.generateReply(prompt);
 
+            System.out.println("RAW GEMINI REPLY:\n" + rawReply);
+
+            if (rawReply == null || rawReply.isBlank()) {
+                throw new RuntimeException("Empty Gemini response");
+            }
+
             String cleaned = extractJson(rawReply);
 
             GeminiQuestion q = gson.fromJson(cleaned, GeminiQuestion.class);
+
+            if (q == null || q.answers == null) {
+                throw new RuntimeException("Invalid Gemini JSON");
+            }
 
             Database.saveMessage(sessionId, "user", topic);
             Database.saveMessage(sessionId, "assistant", cleaned);
@@ -123,11 +154,18 @@ public class Main {
         });
 
         // ─────────────────────────────
-        // GENERATE QUESTION (FIXED + SAFE INSERT)
+        // GENERATE QUESTION
         // ─────────────────────────────
         server.createContext("/api/generate-question", exchange -> {
 
             exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+            exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, OPTIONS");
+
+            if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
 
             if (!exchange.getRequestMethod().equalsIgnoreCase("GET")) {
                 exchange.sendResponseHeaders(405, -1);
@@ -135,18 +173,56 @@ public class Main {
             }
 
             try {
+                String query = exchange.getRequestURI().getQuery();
+                String topic = "general";
+
+                if (query != null && query.contains("topic=")) {
+                    String raw = query.split("topic=")[1].split("&")[0];
+                    topic = URLDecoder.decode(raw, StandardCharsets.UTF_8);
+                }
+
                 String prompt =
-                        "Return ONLY valid JSON.\n" +
-                                "Schema:\n" +
-                                "{ \"topic\": string, \"difficulty\": 1-5, \"question\": string, " +
-                                "\"answers\": {\"A\":string,\"B\":string,\"C\":string,\"D\":string}, " +
-                                "\"correct_answer\": \"A\" }\n\n" +
-                                "No markdown. No explanation. Only JSON.";
+                        """
+                        OUTPUT_FORMAT=JSON
+                        STRICT_MODE=true
+                        NO_TEXT_ALLOWED=true
+                    
+                        SCHEMA:
+                        {
+                          "topic": "string",
+                          "difficulty": 1,
+                          "question": "string",
+                          "answers": {
+                            "A": "string",
+                            "B": "string",
+                            "C": "string",
+                            "D": "string"
+                          },
+                          "correct_answer": "A"
+                        }
+                    
+                        RULES:
+                        - Output must match SCHEMA exactly
+                        - No additional keys
+                        - No explanation
+                        - No markdown
+                        - No backticks
+                        - Output starts with { and ends with }
+                    
+                        INPUT:
+                        topic = %s
+                        """.formatted(topic);
 
                 Gemini gemini = new Gemini();
                 String rawReply = gemini.generateReply(prompt);
 
-                String cleaned = extractJson(stripMarkdown(rawReply));
+                System.out.println("RAW GEMINI REPLY:\n" + rawReply);
+
+                if (rawReply == null || rawReply.isBlank()) {
+                    throw new RuntimeException("Empty Gemini response");
+                }
+
+                String cleaned = extractJson(rawReply);
 
                 GeminiQuestion q = gson.fromJson(cleaned, GeminiQuestion.class);
 
@@ -176,8 +252,10 @@ public class Main {
             } catch (Exception e) {
                 String error = gson.toJson(new ReplyResponse("Error: " + e.getMessage()));
                 exchange.sendResponseHeaders(500, error.getBytes().length);
-                exchange.getResponseBody().write(error.getBytes());
-                exchange.close();
+
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(error.getBytes());
+                }
             }
         });
 
@@ -238,19 +316,17 @@ public class Main {
     // ─────────────────────────────
     // HELPERS
     // ─────────────────────────────
+
     static String extractJson(String text) {
         int start = text.indexOf("{");
         int end = text.lastIndexOf("}");
+
         if (start == -1 || end == -1 || end <= start) {
+            System.out.println("BAD RESPONSE:\n" + text);
             throw new RuntimeException("No JSON found");
         }
-        return text.substring(start, end + 1);
-    }
 
-    static String stripMarkdown(String text) {
-        return text.replace("```json", "")
-                .replace("```", "")
-                .trim();
+        return text.substring(start, end + 1);
     }
 
     // ─────────────────────────────

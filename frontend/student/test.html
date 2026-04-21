@@ -841,87 +841,40 @@
      * If previewChoice is null (student ran out the clock or hit Next
      * without selecting) the question is scored as wrong.
      */
-    async function commitAndAdvance() {
-  clearInterval(testState.timerInterval);
+    function commitAndAdvance() {
+      clearInterval(testState.timerInterval);
 
-  const idx     = testState.currentQuestion;
-  const q       = testState.questions[idx];
-  const choice  = testState.previewChoice;
-  const correct = choice !== null && choice === q.correct;
+      const idx    = testState.currentQuestion;
+      const q      = testState.questions[idx];
+      const choice = testState.previewChoice;
+      const correct = choice !== null && choice === q.correct;
 
-  // Record answer + path
-  testState.difficultyPath.push({ level: testState.currentDifficulty, correct });
-  testState.answerMap[q.questionId] = choice || '__TIMEOUT__';
-  sessionStorage.setItem('answerMap', JSON.stringify(testState.answerMap));
-  testState.totalTimeSpent += (QUESTION_TIME_LIMIT - Math.max(0, testState.timeRemaining));
+      // Record the path entry at the level this question was asked at,
+      // BEFORE we adjust for the next question.
+      testState.difficultyPath.push({ level: testState.currentDifficulty, correct });
 
-  // Adjust difficulty for the next question
-  testState.currentDifficulty = correct
-    ? Math.min(3, testState.currentDifficulty + 1)
-    : Math.max(1, testState.currentDifficulty - 1);
+      testState.answerMap[q.questionId] = choice || '__TIMEOUT__';
+      sessionStorage.setItem('answerMap', JSON.stringify(testState.answerMap));
 
-  renderDifficultyPath();
-  updateProgress();
-  renderQuestionMap();
+      // Track total time spent (for the submit payload).
+      testState.totalTimeSpent += (QUESTION_TIME_LIMIT - Math.max(0, testState.timeRemaining));
 
-  const next = idx + 1;
+      // Adaptive adjustment for the NEXT question.
+      testState.currentDifficulty = correct
+        ? Math.min(3, testState.currentDifficulty + 1)
+        : Math.max(1, testState.currentDifficulty - 1);
 
-  // Last question → submit immediately, no fetch needed
-  if (next >= testState.totalQuestions) {
-    submitTest();
-    return;
-  }
+      renderDifficultyPath();
+      updateProgress();
+      renderQuestionMap();
 
-  // ── AI FETCH: Ask the backend for the next question ──────────
-  // Show a loading spinner while we wait
-  document.getElementById('question-text').innerHTML = `
-    <div class="question-loading">
-      <div class="spinner"></div>
-      <span>Generating next question...</span>
-    </div>`;
-  document.getElementById('choices-list').innerHTML = '';
-  document.getElementById('next-btn').disabled = true;
-
-  // Build the prompt — passes difficulty + topic to your Java backend
-  const topic   = sessionStorage.getItem('testTopic') || 'AP Computer Science A Java programming';
-  const level   = testState.currentDifficulty;
-  const message = `Generate exactly 1 AP Computer Science A multiple-choice question. Difficulty level: ${level} on a scale of 1 to 3. Topic: ${topic}. Requirements: 4 answer choices labeled A, B, C, and D. Exactly 1 correct answer. Make it appropriate for a high school AP CSA student. Do not include markdown or extra explanation. Return valid JSON only in this format - not always answer A: {"topic":"string","text":"string","choices":[{"id":"A","text":"string"},{"id":"B","text":"string"},{"id":"C","text":"string"},{"id":"D","text":"string"}],"correctChoice":"A"}`;
-
-  try {
-    const response = await fetch('http://localhost:8080/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message })
-    });
-
-    if (!response.ok) throw new Error('Backend returned an error.');
-
-    const data = await response.json();
-
-    // The backend wraps the question JSON inside data.reply as a string — parse it
-    const aiQuestion = JSON.parse(data.reply);
-
-    // Map the backend's field names to what the frontend expects
-    const newQuestion = {
-      questionId: `Q-AI-${next + 1}`,       // unique ID for this question
-      text:       aiQuestion.text,
-      choices:    aiQuestion.choices,
-      correct:    aiQuestion.correctChoice,  // backend uses "correctChoice"
-    };
-
-    // Replace the placeholder question at this index with the AI one
-    testState.questions[next] = newQuestion;
-
-  } catch (err) {
-    // If the AI call fails, fall back to the placeholder question
-    console.error('[AI Fetch] Failed to get next question:', err);
-    // placeholder is already in testState.questions[next], so we just continue
-  }
-
-  // Re-enable Next and load the question (AI or fallback)
-  document.getElementById('next-btn').disabled = false;
-  loadQuestion(next);
-}
+      const next = idx + 1;
+      if (next < testState.totalQuestions) {
+        loadQuestion(next);
+      } else {
+        submitTest();
+      }
+    }
 
     // ── DIFFICULTY BADGE ───────────────────────────────────────
     function updateDifficultyBadge() {
@@ -1056,7 +1009,8 @@
       };
 
       console.log('[Submit] Posting results:', payload);
-      sessionStorage.setItem('testTopic', 'sorting algorithms and time complexity');
+      // PLACEHOLDER: Simulate navigation to results
+      sessionStorage.setItem('lastResult', JSON.stringify(payload));
       window.location.href = 'results.html';
     }
 

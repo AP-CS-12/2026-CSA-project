@@ -277,56 +277,6 @@
         Sign in with Google
       </button>
 
-      <!-- Fallback: email/password for non-Google accounts -->
-      <div class="or-divider">or sign in with ID</div>
-
-      <!--
-        FALLBACK FORM
-        ─────────────────────────────────────────────────
-        data-form="login" — Integration team: attach your
-        fetch() POST handler to this form.
-        Endpoint target: POST /api/auth/login
-        Expected body: { studentId, password }
-      -->
-      <form
-        class="login-form"
-        data-form="login"
-        onsubmit="handleLoginSubmit(event)"
-        novalidate
-      >
-        <div class="form-group">
-          <label for="student-id">Student ID</label>
-          <input
-            type="text"
-            id="student-id"
-            name="studentId"
-            placeholder="e.g. STU-2025-0042"
-            autocomplete="username"
-            required
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Enter your password"
-            autocomplete="current-password"
-            required
-          />
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-lg" data-action="login-submit">
-          Sign In
-        </button>
-
-        <p class="forgot-link">
-          Forgot your password? <a href="#" data-action="forgot-password">Contact your teacher</a>
-        </p>
-      </form>
-
       <!-- Security notice -->
       <div class="security-note" role="note">
         <span class="icon">🔒</span>
@@ -359,34 +309,6 @@
     function handleGoogleSignIn(e) {
       e.preventDefault();
       alert('Google Sign-In is not yet configured. Ask the integration team for the CLIENT_ID, then set it in auth.js.');
-    }
-
-    /**
-     * handleLoginSubmit()
-     * ─────────────────────────────────────────────
-     * PLACEHOLDER: Replace with a real fetch() POST.
-     * Integration Team Endpoint: POST /api/auth/login
-     */
-    function handleLoginSubmit(e) {
-      e.preventDefault();
-      const form = e.target;
-      const studentId = form.studentId.value.trim();
-      const password  = form.password.value;
-
-      if (!studentId || !password) {
-        alert('Please fill in all fields.');
-        return;
-      }
-
-      // PLACEHOLDER — simulate successful login using the session shape auth.js expects.
-      sessionStorage.setItem('authToken', 'dev-' + studentId);
-      sessionStorage.setItem('student', JSON.stringify({
-        id: studentId,
-        name: studentId,
-        email: '',
-        avatar: '',
-      }));
-      window.location.href = 'dashboard.html';
     }
 
     // Wait for the GIS script to finish loading, then hand off to auth.js.

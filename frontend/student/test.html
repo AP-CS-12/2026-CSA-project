@@ -999,13 +999,46 @@
       clearInterval(testState.timerInterval);
       closeSubmitModal();
 
+      const reviewQuestions = testState.questions.map((q, i) => {
+        const pathEntry = testState.difficultyPath[i];
+        const raw = testState.answerMap[q.questionId];
+        const isTimeout = raw === '__TIMEOUT__' || raw === undefined;
+        const correct = !isTimeout && raw === q.correct;
+        const studentChoice = !isTimeout ? q.choices.find(c => c.id === raw) : null;
+        const correctChoice = q.choices.find(c => c.id === q.correct);
+        return {
+          id: q.questionId,
+          number: i + 1,
+          prompt: q.text,
+          choices: q.choices,
+          correctId: q.correct,
+          correctAnswer: correctChoice ? `${q.correct} — ${correctChoice.text}` : q.correct,
+          studentChoiceId: isTimeout ? null : raw,
+          studentAnswer: isTimeout
+            ? '(No answer submitted)'
+            : studentChoice ? `${raw} — ${studentChoice.text}` : String(raw),
+          status: isTimeout ? 'skipped' : correct ? 'correct' : 'incorrect',
+          difficulty: pathEntry ? pathEntry.level : null,
+          flagged: testState.flagged.has(i),
+          aiPriority: !correct || isTimeout
+        };
+      });
+      const correctCount = reviewQuestions.filter(q => q.status === 'correct').length;
+      const testName = (document.querySelector('[data-bind="test-name"]')?.textContent || '').trim() || 'Test';
+
       const payload = {
         testId:    testState.testId,
+        testName,
         studentId: testState.studentId,
         answerMap: testState.answerMap,
         timeTaken: testState.totalTimeSpent,
         difficultyPath:  testState.difficultyPath,
         finalDifficulty: testState.currentDifficulty,
+        totalQuestions:  testState.totalQuestions,
+        correctCount,
+        score: Math.round((correctCount / Math.max(1, testState.totalQuestions)) * 100),
+        flaggedIndices: Array.from(testState.flagged),
+        questions: reviewQuestions
       };
 
       console.log('[Submit] Posting results:', payload);

@@ -19,7 +19,7 @@ public class Student {
     
     //Methods(connect to buttons)
     public boolean login(String username, String password) { 
-    	// checks whether the entered username and password are correct
+    	return this.username.equals(username) && this.password.equals(password);
     }
     public void viewScore() { 
     	//view the student's past scores

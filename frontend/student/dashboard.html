@@ -572,15 +572,16 @@
       }
     })();
 
-    // Allow keyboard activation of test cards (accessibility)
+    // Allow keyboard activation of test cards (accessibility) .
     document.querySelectorAll('.test-card[role="button"]').forEach(card => {
       card.addEventListener('keydown', e => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           card.click();
         }
-      });
+      }); 
     });
+    // test
   </script>
 
 </body>

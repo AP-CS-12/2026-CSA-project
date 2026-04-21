@@ -1,0 +1,333 @@
+/* ============================================================
+   style.css — Central Stylesheet for AP CS Student Testing Platform
+   Palette: Navy Blue (#0D1B2A), Slate Grey (#6B7C93), White (#FFFFFF)
+   Accent:  Gold (#C9A84C) for high-stakes emphasis
+   ============================================================ */
+
+/* ── 1. DESIGN TOKENS (CSS Variables) ─────────────────────── */
+:root {
+    /* Colors */
+    --navy:        #0D1B2A;
+    --navy-mid:    #1A2E45;
+    --navy-light:  #243B55;
+    --slate:       #6B7C93;
+    --slate-light: #A0AEBF;
+    --white:       #FFFFFF;
+    --off-white:   #F4F6F9;
+    --accent:      #C9A84C;   /* gold — used sparingly for urgency/highlights */
+    --danger:      #C0392B;
+    --success:     #1E7E34;
+    --border:      #D1D9E0;
+  
+    /* Typography */
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body:    'IBM Plex Sans', 'Segoe UI', sans-serif;
+    --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
+  
+    /* Spacing */
+    --radius:    6px;
+    --radius-lg: 12px;
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.18);
+  
+    /* Transitions */
+    --ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  
+  /* ── 2. RESET & BASE ───────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  html { font-size: 16px; scroll-behavior: smooth; }
+  
+  body {
+    font-family: var(--font-body);
+    background-color: var(--off-white);
+    color: var(--navy);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  
+  /* Import Google Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  
+  /* ── 3. TYPOGRAPHY ─────────────────────────────────────────── */
+  h1, h2, h3 { font-family: var(--font-display); color: var(--navy); line-height: 1.2; }
+  h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); }
+  h2 { font-size: clamp(1.3rem, 2.5vw, 1.9rem); }
+  h3 { font-size: 1.15rem; }
+  p  { color: var(--slate); font-size: 0.95rem; }
+  a  { color: var(--navy-light); text-decoration: none; transition: color 0.2s; }
+  a:hover { color: var(--accent); }
+  
+  /* ── 4. LAYOUT UTILITIES ───────────────────────────────────── */
+  .container   { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+  .flex        { display: flex; }
+  .flex-center { display: flex; align-items: center; justify-content: center; }
+  .gap-sm      { gap: 8px; }
+  .gap-md      { gap: 16px; }
+  .gap-lg      { gap: 24px; }
+  
+  /* ── 5. HEADER / NAVBAR ────────────────────────────────────── */
+  .site-header {
+    background: var(--navy);
+    border-bottom: 2px solid var(--accent);
+    padding: 0 32px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-md);
+  }
+  
+  .site-header .logo {
+    font-family: var(--font-display);
+    color: var(--white);
+    font-size: 1.2rem;
+    letter-spacing: 0.5px;
+  }
+  
+  .site-header .logo span { color: var(--accent); }
+  
+  .site-header nav a {
+    color: var(--slate-light);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: var(--radius);
+    transition: all 0.2s var(--ease);
+  }
+  
+  .site-header nav a:hover,
+  .site-header nav a.active {
+    color: var(--white);
+    background: var(--navy-light);
+  }
+  
+  .site-header .user-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--slate-light);
+    font-size: 0.85rem;
+  }
+  
+  .site-header .user-badge .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--navy-light);
+    border: 2px solid var(--slate);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 0.75rem;
+    font-weight: 600;
+    object-fit: cover;
+  }
+  
+  /* ── 6. BUTTONS ────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 22px;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: all 0.2s var(--ease);
+  }
+  
+  .btn-primary {
+    background: var(--navy);
+    color: var(--white);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-primary:hover { background: var(--navy-light); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  
+  .btn-accent {
+    background: var(--accent);
+    color: var(--navy);
+  }
+  .btn-accent:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  
+  .btn-outline {
+    background: transparent;
+    color: var(--navy);
+    border: 1.5px solid var(--border);
+  }
+  .btn-outline:hover { border-color: var(--navy); background: var(--off-white); }
+  
+  .btn-danger { background: var(--danger); color: var(--white); }
+  .btn-danger:hover { filter: brightness(0.9); }
+  
+  .btn-lg  { padding: 13px 30px; font-size: 1rem; }
+  .btn-sm  { padding: 7px 14px; font-size: 0.8rem; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+  
+  /* ── 7. FORM ELEMENTS ──────────────────────────────────────── */
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  
+  .form-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  
+  .form-group input,
+  .form-group select {
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--navy);
+    background: var(--white);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px rgba(13, 27, 42, 0.1);
+  }
+  
+  /* ── 8. CARDS ──────────────────────────────────────────────── */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s var(--ease), transform 0.2s var(--ease);
+  }
+  
+  .card:hover { box-shadow: var(--shadow-md); }
+  
+  .card-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  /* ── 9. BADGES & STATUS TAGS ───────────────────────────────── */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+  .badge-navy    { background: var(--navy);    color: var(--white); }
+  .badge-slate   { background: var(--slate-light); color: var(--navy); }
+  .badge-accent  { background: var(--accent);  color: var(--navy); }
+  .badge-success { background: #d4edda; color: var(--success); }
+  .badge-danger  { background: #f8d7da; color: var(--danger); }
+  
+  /* ── 10. ALERTS / BANNERS ──────────────────────────────────── */
+  .alert {
+    padding: 12px 18px;
+    border-radius: var(--radius);
+    font-size: 0.88rem;
+    border-left: 4px solid;
+  }
+  .alert-info    { background: #e8edf5; border-color: var(--navy); color: var(--navy-mid); }
+  .alert-warning { background: #fef9e7; border-color: var(--accent); color: #7d6009; }
+  .alert-danger  { background: #fde8e8; border-color: var(--danger); color: var(--danger); }
+  
+  /* ── 11. PROGRESS BAR ──────────────────────────────────────── */
+  .progress-bar-track {
+    background: var(--border);
+    border-radius: 99px;
+    height: 6px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--navy);
+    border-radius: 99px;
+    transition: width 0.4s var(--ease);
+  }
+  .progress-bar-fill.accent { background: var(--accent); }
+  
+  /* ── 12. DIVIDER ───────────────────────────────────────────── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 20px 0;
+  }
+  
+  /* ── 13. FOOTER ────────────────────────────────────────────── */
+  .site-footer {
+    background: var(--navy);
+    color: var(--slate-light);
+    text-align: center;
+    padding: 20px;
+    font-size: 0.78rem;
+    margin-top: auto;
+    border-top: 2px solid var(--accent);
+  }
+  
+  /* ── 14. MODALS ────────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(13, 27, 42, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  
+  .modal {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 36px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(20px);
+    transition: transform 0.25s var(--ease);
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  
+  /* ── 15. LOADING SPINNER ───────────────────────────────────── */
+  .spinner {
+    width: 22px; height: 22px;
+    border: 3px solid var(--border);
+    border-top-color: var(--navy);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  
+  /* ── 16. RESPONSIVE UTILITIES ──────────────────────────────── */
+  @media (max-width: 768px) {
+    .hide-mobile { display: none !important; }
+    .site-header { padding: 0 16px; }
+    .container   { padding: 0 16px; }
+  }

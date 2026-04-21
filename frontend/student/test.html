@@ -539,7 +539,7 @@
           <button class="btn btn-primary"
                   id="next-btn"
                   data-action="next-question"
-                  onclick="navigateQuestion(1)">
+                  onclick="getNextQuestion('t-1', 1)"> <!--change t-1 and 1 to a variable for difficulty when difficulty scaling is done-->
             Next →
           </button>
         </div>
@@ -1029,6 +1029,8 @@
     });
 
   </script>
+
+  <script src="intergration.js"></script>
 
 </body>
 </html>

@@ -80,6 +80,10 @@ async function onGoogleCredential(response) {
   let fallbackStudent;
   try {
     const claims = decodeJwtPayload(idToken);
+    if (!claims.email || !claims.email.endsWith('@smus.ca')) {
+      alert('Please sign in with your school account (@smus.ca)');
+      return;
+    }
     fallbackStudent = {
       id: claims.sub,
       name: claims.name,
@@ -134,6 +138,7 @@ function initGoogleAuth() {
     client_id: AUTH_CONFIG.CLIENT_ID,
     callback: onGoogleCredential,
     auto_select: false,
+    hosted_domain: 'smus.ca',
   });
 
   const container = document.getElementById('google-signin-container');

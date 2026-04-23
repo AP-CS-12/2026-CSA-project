@@ -84,10 +84,10 @@ async function getNextQuestion() {
 
     console.log("Question received:", data);
 
-    // ── UPDATE QUESTION TEXT ──
+    // UPDATE QUESTION TEXT
     document.getElementById("questionText").innerHTML = data.text;
 
-    // ── UPDATE CHOICES (IMPORTANT ADDITION) ──
+    // UPDATE CHOICES 
     const list = document.getElementById("choices-list");
     list.innerHTML = "";
 
@@ -105,7 +105,7 @@ async function getNextQuestion() {
         list.appendChild(li);
     });
 
-    // ── SAVE NEW DIFFICULTY ──
+    // SAVE NEW DIFFICULTY
     sessionStorage.setItem("difficulty", data.difficulty);
 }
 

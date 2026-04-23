@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test History — Adaptive Test Engine</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="auth.js"></script>
+  <script>
+    // Session guard: bounce to login if no session.
+    (function () {
+      const session = window.requireSession && window.requireSession();
+      if (session && session.student) {
+        window.__STUDENT__ = session.student;
+      }
+    })();
+  </script>
+
+  <style>
+    .page-wrapper { display: flex; flex-direction: column; min-height: 100vh; }
+    .main-content { flex: 1; padding: 36px 0 60px; }
+
+    .section-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .section-heading h2 { font-size: 1.3rem; }
+    .section-heading a { font-size: 0.82rem; color: var(--slate); }
+    .section-heading a:hover { color: var(--navy); }
+
+    .history-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .history-row {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 22px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .history-row h3 {
+      font-size: 1rem;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+    .history-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      font-size: 0.82rem;
+      color: var(--slate);
+    }
+    .history-meta span strong { color: var(--navy); font-weight: 600; }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+    }
+    .empty-state h3 { color: var(--navy); margin-bottom: 8px; font-size: 1.1rem; }
+    .empty-state p  { margin-bottom: 18px; }
+
+    @media (max-width: 640px) {
+      .history-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body class="page-wrapper">
+
+  <header class="site-header">
+    <div class="logo">Adaptive <span>Test&nbsp;Engine</span></div>
+
+    <nav class="hide-mobile" aria-label="Main navigation">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="history.html" class="active">Test History</a>
+      <a href="#" data-action="nav-help">Help</a>
+    </nav>
+
+    <div class="user-badge">
+      <span class="hide-mobile user-name" data-bind="student-name">Jane Student</span>
+      <div class="avatar" data-bind="student-avatar" aria-label="Student avatar">JS</div>
+      <button class="btn btn-sm btn-outline" style="color:white;border-color:#6B7C93"
+              data-action="logout" onclick="handleLogout()">
+        Sign Out
+      </button>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+
+      <div class="section-heading">
+        <h2>Test History</h2>
+        <a href="dashboard.html">← Back to Dashboard</a>
+      </div>
+
+      <div id="history-list" class="history-list"></div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    Adaptive Test Engine &mdash; AP Computer Science Program &nbsp;|&nbsp; Academic Year 2025–26
+  </footer>
+
+  <script>
+    function handleLogout() {
+      if (confirm('Are you sure you want to sign out?')) {
+        (window.clearSession || sessionStorage.clear.bind(sessionStorage))();
+        window.location.href = 'index.html';
+      }
+    }
+
+    // TODO(DB team — Michael C. / Marwan / Jason): replace this sessionStorage
+    // read with GET /api/results/history?studentId={id} to pull the student's
+    // full attempt log from the backend.
+    function loadHistory() {
+      try {
+        const raw = sessionStorage.getItem('testHistory');
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function renderHistory() {
+      const container = document.getElementById('history-list');
+      const history = loadHistory();
+
+      if (!history.length) {
+        container.innerHTML = `
+          <div class="card empty-state">
+            <h3>No tests yet</h3>
+            <p>You haven't taken any tests yet. Go to the Dashboard to start one.</p>
+            <a href="dashboard.html" class="btn btn-primary">Go to Dashboard →</a>
+          </div>
+        `;
+        return;
+      }
+
+      const rows = [...history].reverse().map(entry => {
+        const correct = entry.correctCount ?? 0;
+        const total = entry.totalQuestions ?? 0;
+        const score = entry.score ?? 0;
+        const level = entry.finalDifficulty ?? '—';
+        const subject = entry.subject || entry.testName || 'Test';
+        const date = entry.date || '—';
+        const id = encodeURIComponent(entry.testId || '');
+        return `
+          <div class="history-row" data-history-id="${entry.testId || ''}">
+            <div>
+              <h3>${subject}</h3>
+              <div class="history-meta">
+                <span><strong>Date:</strong> ${date}</span>
+                <span><strong>Score:</strong> ${correct}/${total} — ${score}%</span>
+                <span><strong>Final Difficulty:</strong> Level ${level}</span>
+              </div>
+            </div>
+            <a href="results.html?testId=${id}" class="btn btn-primary btn-sm">View</a>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = rows;
+    }
+
+    (function populateStudent() {
+      const s = window.__STUDENT__;
+      if (!s) return;
+      const setText = (sel, value) => {
+        document.querySelectorAll(sel).forEach(el => { if (value) el.textContent = value; });
+      };
+      setText('[data-bind="student-name"]', s.name);
+      const avatar = document.querySelector('[data-bind="student-avatar"]');
+      if (avatar && s.name) {
+        avatar.textContent = s.name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
+      }
+    })();
+
+    renderHistory();
+  </script>
+
+</body>
+</html>

@@ -188,7 +188,8 @@
   }
   
   .form-group input,
-  .form-group select {
+  .form-group select,
+  .form-group textarea {
     padding: 10px 14px;
     border: 1.5px solid var(--border);
     border-radius: var(--radius);
@@ -199,9 +200,16 @@
     transition: border-color 0.2s, box-shadow 0.2s;
     outline: none;
   }
-  
+
+  .form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.5;
+  }
+
   .form-group input:focus,
-  .form-group select:focus {
+  .form-group select:focus,
+  .form-group textarea:focus {
     border-color: var(--navy);
     box-shadow: 0 0 0 3px rgba(13, 27, 42, 0.1);
   }
@@ -331,3 +339,153 @@
     .site-header { padding: 0 16px; }
     .container   { padding: 0 16px; }
   }
+
+  /* ── 17. PAGE HERO ─────────────────────────────────────────── */
+  .page-hero {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: var(--white);
+    padding: 36px 40px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 28px;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+  }
+  .page-hero::after {
+    content: '';
+    position: absolute;
+    right: -40px; bottom: -40px;
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: rgba(201, 168, 76, 0.08);
+    pointer-events: none;
+  }
+  .page-hero h1 {
+    color: var(--white);
+    font-size: clamp(1.7rem, 3.2vw, 2.2rem);
+    margin-bottom: 8px;
+  }
+  .page-hero p {
+    color: var(--slate-light);
+    font-size: 0.95rem;
+    max-width: 640px;
+  }
+
+  /* ── 18. TAB NAV (anchor pills) ────────────────────────────── */
+  .tab-nav {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 28px;
+  }
+  .tab-nav a {
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--slate);
+    letter-spacing: 0.3px;
+    transition: all 0.2s var(--ease);
+  }
+  .tab-nav a:hover,
+  .tab-nav a.active {
+    background: var(--navy);
+    color: var(--white);
+  }
+
+  /* ── 19. NUMBERED STEP CARDS ───────────────────────────────── */
+  .step-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+  }
+  .step-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    transition: box-shadow 0.2s var(--ease), transform 0.2s var(--ease);
+  }
+  .step-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .step-card .step-number {
+    flex-shrink: 0;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    border: 2px solid var(--accent);
+  }
+  .step-card h3 {
+    font-size: 1rem;
+    margin-bottom: 6px;
+    color: var(--navy);
+  }
+  .step-card p {
+    font-size: 0.88rem;
+    color: var(--slate);
+    line-height: 1.55;
+  }
+
+  /* ── 20. ACCORDION (details/summary) ───────────────────────── */
+  .accordion { display: flex; flex-direction: column; gap: 10px; }
+  .accordion-item {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .accordion-item summary {
+    padding: 16px 22px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--navy);
+    font-size: 0.95rem;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    transition: background 0.15s;
+  }
+  .accordion-item summary::-webkit-details-marker { display: none; }
+  .accordion-item summary::after {
+    content: '+';
+    color: var(--accent);
+    font-weight: 400;
+    font-size: 1.4rem;
+    line-height: 1;
+  }
+  .accordion-item[open] summary::after { content: '−'; }
+  .accordion-item summary:hover { background: var(--off-white); }
+  .accordion-item[open] summary {
+    background: var(--off-white);
+    border-bottom: 1px solid var(--border);
+  }
+  .accordion-item .accordion-body {
+    padding: 16px 22px 20px;
+    font-size: 0.9rem;
+    color: var(--slate);
+    line-height: 1.6;
+  }
+
+  /* ── 21. SECTION HEADING ───────────────────────────────────── */
+  .section-heading {
+    margin: 36px 0 18px;
+  }
+  .section-heading h2 { font-size: 1.3rem; margin-bottom: 4px; }
+  .section-heading p  { font-size: 0.9rem; color: var(--slate); }

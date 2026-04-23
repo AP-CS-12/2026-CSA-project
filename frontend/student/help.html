@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Help Center — Adaptive Test Engine</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="auth.js"></script>
+  <script>
+    // Session guard: bounce to login if no session.
+    (function () {
+      const session = window.requireSession && window.requireSession();
+      if (session && session.student) {
+        window.__STUDENT__ = session.student;
+      }
+    })();
+  </script>
+</head>
+<body class="page-wrapper">
+
+  <!-- Header / navigation — identical to dashboard.html -->
+  <header class="site-header">
+    <div class="logo">Adaptive <span>Test&nbsp;Engine</span></div>
+
+    <nav class="hide-mobile" aria-label="Main navigation">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="all_tests.html" data-action="nav-all-tests">All Tests</a>
+      <a href="history.html" data-action="nav-history">Test History</a>
+      <a href="help.html" class="active" data-action="nav-help">Help</a>
+    </nav>
+
+    <div class="user-badge">
+      <span class="hide-mobile user-name" data-bind="student-name">Jane Student</span>
+      <div class="avatar" data-bind="student-avatar" aria-label="Student avatar">JS</div>
+      <button class="btn btn-sm btn-outline" style="color:white;border-color:#6B7C93"
+              data-action="logout" onclick="handleLogout()">
+        Sign Out
+      </button>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+
+      <!-- Hero -->
+      <section class="page-hero">
+        <h1>Help Center</h1>
+        <p>Everything you need to know about using the Adaptive Test Engine — how it works, common questions, and how to reach your teacher.</p>
+      </section>
+
+      <!-- Quick-nav tabs -->
+      <nav class="tab-nav" aria-label="Help sections">
+        <a href="#how-to-use" class="active">How to use</a>
+        <a href="#faq">FAQ</a>
+        <a href="#contact">Contact</a>
+      </nav>
+
+      <!-- ═══════════════════════════════════════════════
+           Section 1 — How to use
+      ═══════════════════════════════════════════════ -->
+      <section id="how-to-use">
+        <div class="section-heading">
+          <h2>How to use the Adaptive Test Engine</h2>
+          <p>Six quick steps that cover everything from signing in to reviewing your results.</p>
+        </div>
+
+        <div class="step-grid">
+          <div class="step-card">
+            <div class="step-number">1</div>
+            <div>
+              <h3>Sign in with your school account</h3>
+              <p>Use your <strong>@smus.ca</strong> Google account on the sign-in screen. No separate password to remember — one tap of the Google button and you're in.</p>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">2</div>
+            <div>
+              <h3>Pick a test from the dashboard</h3>
+              <p>The dashboard shows your recommended tests up top. Click any test card to begin, or open <a href="all_tests.html">All Tests</a> to browse the full catalog and filter by status.</p>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">3</div>
+            <div>
+              <h3>Read the adaptive difficulty badge</h3>
+              <p>Each question is tagged <span class="badge badge-success">Beginner</span>, <span class="badge badge-accent">Intermediate</span>, or <span class="badge badge-danger">Advanced</span>. The engine starts you at your current level and moves up or down based on how you answer.</p>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">4</div>
+            <div>
+              <h3>Watch the timer — 30 seconds per question</h3>
+              <p>You get <strong>30 seconds</strong> to answer each question. When the timer hits zero, the test auto-submits that question and moves on. There's no penalty for running out — it just counts as "no answer."</p>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">5</div>
+            <div>
+              <h3>Follow the difficulty-path dots</h3>
+              <p>The row of dots at the bottom of the test shows how your path has adapted: the higher the dot, the harder the question. It's a quick visual of where the engine has taken you so far.</p>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">6</div>
+            <div>
+              <h3>Review past results any time</h3>
+              <p>Head to <a href="history.html">Test History</a> to see every test you've taken, or open a specific attempt from the <strong>Recent Activity</strong> panel on your dashboard.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════
+           Section 2 — FAQ
+      ═══════════════════════════════════════════════ -->
+      <section id="faq">
+        <div class="section-heading">
+          <h2>Frequently asked questions</h2>
+          <p>Tap any question to see the answer.</p>
+        </div>
+
+        <div class="accordion">
+          <details class="accordion-item">
+            <summary>What happens if I run out of time on a question?</summary>
+            <div class="accordion-body">
+              The question is submitted as "no answer" and counted as incorrect. The test then moves on to the next question automatically — you won't be stuck on one screen.
+            </div>
+          </details>
+
+          <details class="accordion-item">
+            <summary>Can I go back to a previous question?</summary>
+            <div class="accordion-body">
+              No. Because the engine adapts to each answer you submit, questions are locked in once you move on. This keeps the difficulty calibration fair for everyone.
+            </div>
+          </details>
+
+          <details class="accordion-item">
+            <summary>Why did the difficulty change after my answer?</summary>
+            <div class="accordion-body">
+              That's the adaptive engine at work. Answer correctly and the next question is harder; miss one and the next is a little easier. The goal is to find the hardest level you can reliably handle.
+            </div>
+          </details>
+
+          <details class="accordion-item">
+            <summary>What does my adaptive level mean?</summary>
+            <div class="accordion-body">
+              Your adaptive level (1–5) is a running estimate of your skill across the topics you've been tested on. Level 4 means you're consistently answering intermediate-to-advanced questions correctly. It updates after every test.
+            </div>
+          </details>
+
+          <details class="accordion-item">
+            <summary>Can I retake a test?</summary>
+            <div class="accordion-body">
+              Usually yes, unless your teacher has locked a specific attempt. Each retake generates a fresh question set, and your most recent attempt is the one that shows on the dashboard.
+            </div>
+          </details>
+
+          <details class="accordion-item">
+            <summary>Who can see my results?</summary>
+            <div class="accordion-body">
+              You and your teacher. Classmates can't see your scores, and aggregate stats shared with the class are always anonymized.
+            </div>
+          </details>
+
+          <details class="accordion-item">
+            <summary>What if the site doesn't work or I see an error?</summary>
+            <div class="accordion-body">
+              First, try refreshing the page. If you're mid-test, your progress is auto-saved, so you won't lose your answers. If the issue persists, message your teacher using the Contact form below.
+            </div>
+          </details>
+
+          <details class="accordion-item">
+            <summary>What if I accidentally sign out during a test?</summary>
+            <div class="accordion-body">
+              Don't panic — sign back in and open the same test. Your progress up to the last answered question is saved server-side, and you'll resume right where you left off.
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════
+           Section 3 — Contact
+      ═══════════════════════════════════════════════ -->
+      <section id="contact">
+        <div class="section-heading">
+          <h2>Contact your teacher</h2>
+          <p>Still need help? Reach out directly and they'll get back to you.</p>
+        </div>
+
+        <div class="card">
+          <p style="margin-bottom: 20px;">Still need help? Reach out to your teacher directly using the form below.</p>
+
+          <form id="contact-form" onsubmit="sendContactMessage(event)">
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="teacher-name">Teacher's name</label>
+              <input type="text" id="teacher-name" name="teacher" placeholder="e.g. Mr. Smith" required />
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label for="student-message">Your message</label>
+              <textarea id="student-message" name="message" placeholder="Describe what you need help with…" required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Send Message</button>
+          </form>
+
+          <div class="alert alert-info" style="margin-top: 20px;">
+            Your message will be sent to your teacher along with your student info (name, email, and current adaptive level).
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    Adaptive Test Engine &mdash; AP Computer Science Program &nbsp;|&nbsp; Academic Year 2025–26
+  </footer>
+
+  <script>
+    function handleLogout() {
+      if (confirm('Are you sure you want to sign out?')) {
+        (window.clearSession || sessionStorage.clear.bind(sessionStorage))();
+        window.location.href = 'index.html';
+      }
+    }
+
+    (function populateStudent() {
+      const s = window.__STUDENT__;
+      if (!s) return;
+      const setText = (sel, value) => {
+        document.querySelectorAll(sel).forEach(el => { if (value) el.textContent = value; });
+      };
+      setText('[data-bind="student-name"]', s.name);
+      const avatarEl = document.querySelector('[data-bind="student-avatar"]');
+      if (avatarEl && s.name) {
+        const initials = s.name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
+        avatarEl.textContent = initials;
+      }
+    })();
+
+    // Highlight the active tab based on which section is in view.
+    const tabLinks = document.querySelectorAll('.tab-nav a');
+    const sections = ['how-to-use', 'faq', 'contact']
+      .map(id => document.getElementById(id))
+      .filter(Boolean);
+    function setActiveTab(id) {
+      tabLinks.forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+      });
+    }
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(entries => {
+        const visible = entries.filter(e => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) setActiveTab(visible.target.id);
+      }, { rootMargin: '-30% 0px -55% 0px', threshold: [0, 0.25, 0.5, 0.75, 1] });
+      sections.forEach(s => io.observe(s));
+    }
+
+    /**
+     * sendContactMessage(event)
+     * ─────────────────────────────────────────────
+     * TODO(Integration team): wire this up to the real API.
+     *   Endpoint: POST /api/help/contact
+     *   Body:     { teacherName, message, studentId, studentEmail, adaptiveLevel }
+     *   On success: clear the form and show a success .alert.alert-info.
+     *   On error:   show an .alert.alert-danger with the server message.
+     * For now this is a client-only stub — it just shows a confirmation.
+     */
+    function sendContactMessage(event) {
+      event.preventDefault();
+      const teacher = document.getElementById('teacher-name').value.trim();
+      const message = document.getElementById('student-message').value.trim();
+      if (!teacher || !message) return;
+      console.log('[Help] contact stub', { teacher, message, student: window.__STUDENT__ || null });
+      alert(`Thanks! Your message to ${teacher} has been queued.\n\n(This is a placeholder — the Integration team will wire it to the real API.)`);
+      document.getElementById('contact-form').reset();
+    }
+  </script>
+
+</body>
+</html>

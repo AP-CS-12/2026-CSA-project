@@ -1,6 +1,7 @@
 import java.util.List;
 
 public final class GeneratedQuestion {
+
     private final String questionId;
     private final String topic;
     private final String text;

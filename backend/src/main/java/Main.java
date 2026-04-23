@@ -1,11 +1,17 @@
 import com.sun.net.httpserver.HttpServer;
-import java.net.InetSocketAddress;
-import java.io.OutputStream;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
+import com.sun.net.httpserver.HttpExchange;
 import com.google.gson.Gson;
 
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+
 public class Main {
+
+    private static final Gson gson = new Gson();
+    private static final Gemini gemini = new Gemini();
+    private static final SessionStore sessionStore = new SessionStore();
 
     public static void main(String[] args) throws Exception {
 
@@ -16,140 +22,22 @@ public class Main {
         if (portEnv != null) port = Integer.parseInt(portEnv);
 
         HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", port), 0);
-        Gson gson = new Gson();
 
         // ─────────────────────────────
         // HEALTH
         // ─────────────────────────────
         server.createContext("/api/health", exchange -> {
-            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            try {
+                cors(exchange);
 
-            String response = "OK";
-            exchange.sendResponseHeaders(200, response.getBytes().length);
+                if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
+                    exchange.sendResponseHeaders(204, -1);
+                    return;
+                }
 
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(response.getBytes());
-            }
-        });
-
-        // ─────────────────────────────
-        // START SESSION
-        // ─────────────────────────────
-        server.createContext("/api/sessions/start", exchange -> {
-
-            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-            exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
-            exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "POST, OPTIONS");
-
-            if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
-                exchange.sendResponseHeaders(204, -1);
-                return;
-            }
-
-            if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
-                exchange.sendResponseHeaders(405, -1);
-                return;
-            }
-
-            String body = new String(exchange.getRequestBody().readAllBytes());
-
-            long studentId = Long.parseLong(body.replaceAll("[^0-9]", ""));
-            long sessionId = Database.createSession(studentId);
-
-            String response = gson.toJson(new SessionResponse(sessionId));
-
-            exchange.getResponseHeaders().add("Content-Type", "application/json");
-            exchange.sendResponseHeaders(200, response.getBytes().length);
-
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(response.getBytes());
-            }
-        });
-
-        // ─────────────────────────────
-        // CHAT
-        // ─────────────────────────────
-        server.createContext("/api/chat", exchange -> {
-
-            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-            exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
-            exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "POST, OPTIONS");
-
-            if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
-                exchange.sendResponseHeaders(204, -1);
-                return;
-            }
-
-            if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
-                exchange.sendResponseHeaders(405, -1);
-                return;
-            }
-
-            String body = new String(exchange.getRequestBody().readAllBytes());
-            ChatRequest req = gson.fromJson(body, ChatRequest.class);
-
-            long sessionId = req.sessionId;
-            String topic = req.message;
-
-            String prompt =
-                    """
-                    OUTPUT_FORMAT=JSON
-                    STRICT_MODE=true
-                    NO_TEXT_ALLOWED=true
-                
-                    SCHEMA:
-                    {
-                      "topic": "string",
-                      "difficulty": 1,
-                      "question": "string",
-                      "answers": {
-                        "A": "string",
-                        "B": "string",
-                        "C": "string",
-                        "D": "string"
-                      },
-                      "correct_answer": "A"
-                    }
-                
-                    RULES:
-                    - Output must match SCHEMA exactly
-                    - No additional keys
-                    - No explanation
-                    - No markdown
-                    - No backticks
-                    - Output starts with { and ends with }
-                
-                    INPUT:
-                    topic = %s
-                    """.formatted(topic);
-
-            Gemini gemini = new Gemini();
-            String rawReply = gemini.generateReply(prompt);
-
-            System.out.println("RAW GEMINI REPLY:\n" + rawReply);
-
-            if (rawReply == null || rawReply.isBlank()) {
-                throw new RuntimeException("Empty Gemini response");
-            }
-
-            String cleaned = extractJson(rawReply);
-
-            GeminiQuestion q = gson.fromJson(cleaned, GeminiQuestion.class);
-
-            if (q == null || q.answers == null) {
-                throw new RuntimeException("Invalid Gemini JSON");
-            }
-
-            Database.saveMessage(sessionId, "user", topic);
-            Database.saveMessage(sessionId, "assistant", cleaned);
-
-            String response = gson.toJson(new ReplyResponse(cleaned));
-
-            exchange.getResponseHeaders().add("Content-Type", "application/json");
-            exchange.sendResponseHeaders(200, response.getBytes().length);
-
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(response.getBytes());
+                send(exchange, 200, "OK");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         });
 
@@ -157,155 +45,88 @@ public class Main {
         // GENERATE QUESTION
         // ─────────────────────────────
         server.createContext("/api/generate-question", exchange -> {
-
-            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-            exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
-            exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, OPTIONS");
-
-            if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
-                exchange.sendResponseHeaders(204, -1);
-                return;
-            }
-
-            if (!exchange.getRequestMethod().equalsIgnoreCase("GET")) {
-                exchange.sendResponseHeaders(405, -1);
-                return;
-            }
-
             try {
-                String query = exchange.getRequestURI().getQuery();
-                String topic = "general";
+                cors(exchange);
 
-                if (query != null && query.contains("topic=")) {
-                    String raw = query.split("topic=")[1].split("&")[0];
-                    topic = URLDecoder.decode(raw, StandardCharsets.UTF_8);
+                if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
+                    exchange.sendResponseHeaders(204, -1);
+                    return;
                 }
 
-                String prompt =
-                        """
-                        OUTPUT_FORMAT=JSON
-                        STRICT_MODE=true
-                        NO_TEXT_ALLOWED=true
-                    
-                        SCHEMA:
-                        {
-                          "topic": "string",
-                          "difficulty": 1,
-                          "question": "string",
-                          "answers": {
-                            "A": "string",
-                            "B": "string",
-                            "C": "string",
-                            "D": "string"
-                          },
-                          "correct_answer": "A"
-                        }
-                    
-                        RULES:
-                        - Output must match SCHEMA exactly
-                        - No additional keys
-                        - No explanation
-                        - No markdown
-                        - No backticks
-                        - Output starts with { and ends with }
-                    
-                        INPUT:
-                        topic = %s
-                        """.formatted(topic);
-
-                Gemini gemini = new Gemini();
-                String rawReply = gemini.generateReply(prompt);
-
-                System.out.println("RAW GEMINI REPLY:\n" + rawReply);
-
-                if (rawReply == null || rawReply.isBlank()) {
-                    throw new RuntimeException("Empty Gemini response");
+                if (!exchange.getRequestMethod().equalsIgnoreCase("GET")) {
+                    exchange.sendResponseHeaders(405, -1);
+                    return;
                 }
 
-                String cleaned = extractJson(rawReply);
+                String topic = getQueryParam(exchange, "topic", "general");
+                int difficulty = Integer.parseInt(getQueryParam(exchange, "difficulty", "1"));
 
-                GeminiQuestion q = gson.fromJson(cleaned, GeminiQuestion.class);
+                String prompt = buildPrompt(topic, difficulty);
 
-                if (q == null || q.answers == null) {
-                    throw new RuntimeException("Invalid Gemini JSON");
-                }
+                // ✅ Correct call
+                String raw = gemini.generateReply(prompt);
 
-                String answersJson = gson.toJson(q.answers);
+                GeneratedQuestion question = parseQuestion(raw, difficulty);
 
                 Database.insertQuestion(
-                        q.topic,
-                        q.difficulty,
-                        q.question,
-                        answersJson,
-                        q.correct_answer
+                        question.topic(),
+                        question.difficulty(),
+                        question.text(),
+                        gson.toJson(question.choices()),
+                        question.correctChoice()
                 );
 
-                String response = gson.toJson(q);
-
-                exchange.getResponseHeaders().add("Content-Type", "application/json");
-                exchange.sendResponseHeaders(200, response.getBytes().length);
-
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(response.getBytes());
-                }
+                sendJson(exchange, 200, question);
 
             } catch (Exception e) {
-                String error = gson.toJson(new ReplyResponse("Error: " + e.getMessage()));
-                exchange.sendResponseHeaders(500, error.getBytes().length);
-
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(error.getBytes());
-                }
+                e.printStackTrace();
+                try {
+                    sendJson(exchange, 500, new ErrorResponse(e.getMessage()));
+                } catch (Exception ignored) {}
             }
         });
 
         // ─────────────────────────────
-        // DEMO QUESTION
+        // NEXT QUESTION
         // ─────────────────────────────
-        server.createContext("/api/demo/question", exchange -> {
+        server.createContext("/api/next-question", exchange -> {
+            try {
+                cors(exchange);
 
-            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-
-            if (!exchange.getRequestMethod().equalsIgnoreCase("GET")) {
-                exchange.sendResponseHeaders(405, -1);
-                return;
-            }
-
-            try (var conn = Database.getConnection();
-                 var stmt = conn.prepareStatement(
-                         "SELECT topic, question FROM questions ORDER BY RANDOM() LIMIT 1"
-                 );
-                 var rs = stmt.executeQuery()) {
-
-                if (!rs.next()) {
-                    String empty = gson.toJson(new ReplyResponse("No questions found"));
-                    exchange.sendResponseHeaders(200, empty.getBytes().length);
-                    exchange.getResponseBody().write(empty.getBytes());
+                if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
+                    exchange.sendResponseHeaders(204, -1);
                     return;
                 }
 
-                String prompt =
-                        "Explain this clearly:\nTopic: " +
-                                rs.getString("topic") +
-                                "\nQuestion: " +
-                                rs.getString("question");
-
-                Gemini gemini = new Gemini();
-                String reply = gemini.generateReply(prompt);
-
-                String response = gson.toJson(new ReplyResponse(reply));
-
-                exchange.getResponseHeaders().add("Content-Type", "application/json");
-                exchange.sendResponseHeaders(200, response.getBytes().length);
-
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(response.getBytes());
+                if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
+                    exchange.sendResponseHeaders(405, -1);
+                    return;
                 }
 
+                String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                SessionRequest req = gson.fromJson(body, SessionRequest.class);
+
+                TestSession session = sessionStore.getSession(String.valueOf(req.sessionId));
+                if (session == null) {
+                    sendJson(exchange, 404, new ErrorResponse("Session not found"));
+                    return;
+                }
+
+                int difficulty = session.currentDifficulty();
+
+                String prompt = buildPrompt("Java programming", difficulty);
+                String raw = gemini.generateReply(prompt);
+
+                GeneratedQuestion question = parseQuestion(raw, difficulty);
+                session.setCurrentQuestion(question);
+
+                sendJson(exchange, 200, question);
+
             } catch (Exception e) {
-                String error = gson.toJson(new ReplyResponse("Error: " + e.getMessage()));
-                exchange.sendResponseHeaders(500, error.getBytes().length);
-                exchange.getResponseBody().write(error.getBytes());
+                e.printStackTrace();
+                try {
+                    sendJson(exchange, 500, new ErrorResponse(e.getMessage()));
+                } catch (Exception ignored) {}
             }
         });
 
@@ -314,51 +135,157 @@ public class Main {
     }
 
     // ─────────────────────────────
+    // PROMPT
+    // ─────────────────────────────
+    private static String buildPrompt(String topic, int difficulty) {
+        return """
+                TASK: JSON_OUTPUT_GENERATION
+                
+                MODE: STRICT
+                
+                OUTPUT_RULES:
+                - Output must be valid JSON
+                - Output must contain no text outside JSON
+                - Output must not include markdown, comments, or backticks
+                - Output must begin with { and end with }
+                
+                SCHEMA:
+                {
+                  "topic": string,
+                  "text": string,
+                  "choices": [
+                    {"id":"A","text":string},
+                    {"id":"B","text":string},
+                    {"id":"C","text":string},
+                    {"id":"D","text":string}
+                  ],
+                  "correctChoice": "A" | "B" | "C" | "D"
+                }
+                
+                INPUT:
+                topic = %s
+                difficulty = %d
+                
+                RETURN: JSON_ONLY
+                """.formatted(topic, difficulty);
+    }
+
+    // ─────────────────────────────
+    // PARSER
+    // ─────────────────────────────
+    private static GeneratedQuestion parseQuestion(String raw, int difficulty) {
+
+        System.out.println("RAW GEMINI RESPONSE:");
+        System.out.println(raw);
+
+        String json = extractJson(raw);
+        Object obj = Json.parse(json);
+
+        if (!(obj instanceof java.util.Map<?, ?> root)) {
+            throw new IllegalArgumentException("Invalid Gemini JSON");
+        }
+
+        String topic = require(root, "topic");
+        String text = require(root, "text");
+        String correct = require(root, "correctChoice");
+
+        Object choicesObj = root.get("choices");
+        if (!(choicesObj instanceof java.util.List<?> list) || list.size() != 4) {
+            throw new IllegalArgumentException("Must have 4 choices");
+        }
+
+        java.util.List<GeneratedQuestion.Choice> choices = new java.util.ArrayList<>();
+
+        for (Object c : list) {
+            if (!(c instanceof java.util.Map<?, ?> cm)) {
+                throw new IllegalArgumentException("Invalid choice format");
+            }
+
+            choices.add(new GeneratedQuestion.Choice(
+                    require(cm, "id"),
+                    require(cm, "text")
+            ));
+        }
+
+        boolean valid = choices.stream().anyMatch(c -> c.id().equals(correct));
+        if (!valid) throw new IllegalArgumentException("correctChoice mismatch");
+
+        return new GeneratedQuestion(
+                java.util.UUID.randomUUID().toString(),
+                topic,
+                text,
+                choices,
+                correct,
+                difficulty
+        );
+    }
+
+    // ─────────────────────────────
     // HELPERS
     // ─────────────────────────────
+    private static String require(java.util.Map<?, ?> map, String key) {
+        Object v = map.get(key);
+        if (!(v instanceof String s) || s.isBlank()) {
+            throw new IllegalArgumentException("Missing " + key);
+        }
+        return s.trim();
+    }
 
-    static String extractJson(String text) {
+    private static String getQueryParam(HttpExchange ex, String key, String def) {
+        String q = ex.getRequestURI().getQuery();
+        if (q == null) return def;
+
+        for (String part : q.split("&")) {
+            if (part.startsWith(key + "=")) {
+                return URLDecoder.decode(part.split("=")[1], StandardCharsets.UTF_8);
+            }
+        }
+        return def;
+    }
+
+    private static String extractJson(String text) {
+        if (text == null) throw new RuntimeException("Empty Gemini response");
+
         int start = text.indexOf("{");
         int end = text.lastIndexOf("}");
 
         if (start == -1 || end == -1 || end <= start) {
-            System.out.println("BAD RESPONSE:\n" + text);
-            throw new RuntimeException("No JSON found");
+            System.out.println("RAW GEMINI OUTPUT:");
+            System.out.println(text);
+            throw new RuntimeException("No JSON found in Gemini response");
         }
 
         return text.substring(start, end + 1);
     }
 
+    private static void cors(HttpExchange ex) {
+        ex.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        ex.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+        ex.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    }
+
+    private static void send(HttpExchange ex, int code, String body) throws Exception {
+        ex.sendResponseHeaders(code, body.getBytes().length);
+        try (OutputStream os = ex.getResponseBody()) {
+            os.write(body.getBytes());
+        }
+    }
+
+    private static void sendJson(HttpExchange ex, int code, Object obj) throws Exception {
+        String json = gson.toJson(obj);
+        ex.getResponseHeaders().add("Content-Type", "application/json");
+        send(ex, code, json);
+    }
+
     // ─────────────────────────────
     // DTOs
     // ─────────────────────────────
-    static class ChatRequest {
+    static class SessionRequest {
         long sessionId;
-        String message;
     }
 
-    static class SessionResponse {
-        long sessionId;
-        SessionResponse(long id) { this.sessionId = id; }
-    }
-
-    static class ReplyResponse {
-        String reply;
-        ReplyResponse(String r) { this.reply = r; }
-    }
-
-    static class GeminiQuestion {
-        String topic;
-        int difficulty;
-        String question;
-        Answers answers;
-        String correct_answer;
-
-        static class Answers {
-            String A;
-            String B;
-            String C;
-            String D;
-        }
+    static class ErrorResponse {
+        String error;
+        ErrorResponse(String e) { this.error = e; }
     }
 }

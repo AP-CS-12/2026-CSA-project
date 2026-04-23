@@ -83,56 +83,6 @@
     }
     .logo span { color: var(--accent); }
 
-    .main-nav {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .main-nav a,
-    .main-nav button {
-      color: var(--slate-light);
-      background: transparent;
-      border: none;
-      font-size: 0.82rem;
-      font-weight: 600;
-      letter-spacing: 0.45px;
-      text-transform: uppercase;
-      padding: 8px 12px;
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: all 0.18s var(--ease);
-      font-family: var(--font-body);
-    }
-    .main-nav a:hover,
-    .main-nav button:hover,
-    .main-nav .active {
-      color: var(--white);
-      background: var(--navy-light);
-    }
-
-    .user-badge {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: var(--slate-light);
-      font-size: 0.84rem;
-    }
-
-    .avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      border: 2px solid var(--slate);
-      background: var(--navy-light);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--white);
-      font-size: 0.76rem;
-      font-weight: 700;
-      overflow: hidden;
-    }
-
     .container {
       max-width: 1220px;
       margin: 0 auto;
@@ -743,7 +693,6 @@
         flex-wrap: wrap;
         row-gap: 10px;
       }
-      .main-nav { order: 3; width: 100%; overflow-x: auto; }
       .toolbar { align-items: stretch; }
       .comparison-grid,
       .detail-grid {
@@ -779,22 +728,24 @@
       .view-switcher button { flex: 1; }
     }
   </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body data-role="student">
   <div class="page-wrapper">
     <header class="site-header">
       <div class="logo">Adaptive <span>Test&nbsp;Engine</span></div>
 
-      <nav class="main-nav" aria-label="Main navigation">
+      <nav class="hide-mobile" aria-label="Main navigation">
         <a href="dashboard.html">Dashboard</a>
-        <a href="#" class="active">Results Center</a>
+        <a href="all_tests.html">All Tests</a>
+        <a href="history.html">Test History</a>
         <a href="#">Help</a>
       </nav>
 
       <div class="user-badge">
         <span id="header-user-name">Jane Student</span>
         <div class="avatar" id="header-avatar">JS</div>
-        <button class="btn btn-sm btn-outline" type="button" id="signout-btn">Sign Out</button>
+        <button class="btn btn-sm btn-outline" style="color:white;border-color:#6B7C93" type="button" id="signout-btn">Sign Out</button>
       </div>
     </header>
 

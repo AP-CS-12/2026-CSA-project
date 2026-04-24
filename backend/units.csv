@@ -1,0 +1,11 @@
+unit,title,content
+1,Primitive Types,Variables primitive data types int double boolean char operators expressions type casting input output basics and debugging simple programs
+2,Using Objects,Objects strings methods constructors classes String methods Math class wrapper classes and object references
+3,Boolean Expressions and If Statements,Boolean logic comparisons relational operators logical operators if statements if else nested conditionals De Morgan laws
+4,Iteration,for loops while loops do while loops nested loops loop control tracing loops off by one errors pattern generation
+5,Writing Classes,Defining classes instance variables methods constructors encapsulation public private keywords this keyword creating objects designing classes
+6,Arrays,Arrays declaration initialization traversal indexing off by one errors enhanced for loop searching and modifying arrays common algorithms
+7,ArrayList,ArrayList class generics add remove get set iteration differences between arrays and ArrayLists resizing dynamic data structures
+8,2D Arrays,Two dimensional arrays nested iteration row column traversal image grids matrices common patterns and algorithms
+9,Inheritance,Superclasses subclasses extends method overriding polymorphism dynamic method dispatch inheritance hierarchies code reuse abstract thinking
+10,Recursion,Recursive methods base case recursive case stack overflow factorial fibonacci tree recursion tracing recursive decomposition problems

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn -q -pl . -DskipTests compile)",
+      "PowerShell(Get-Command *)",
+      "PowerShell($env:JAVA_HOME; if \\($env:JAVA_HOME\\) { & \"$env:JAVA_HOME\\\\bin\\\\javac.exe\" -version })"
+    ]
+  }
+}

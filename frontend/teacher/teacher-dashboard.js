@@ -2559,10 +2559,16 @@ renderApp();
    4. Falls back to the Google profile claims if the backend is not ready.
    ============================================================ */
 
+function resolveTeacherBackendBase() {
+  const host = window.location.hostname;
+  const isLocal = host === "localhost" || host === "127.0.0.1";
+  return isLocal ? "http://localhost:8080" : "https://cs.andromedax.org";
+}
+
 const TEACHER_AUTH_CONFIG = {
   CLIENT_ID:
     "680126421530-3l43rbetvdghr01pq0ecnfpecb49cikj.apps.googleusercontent.com",
-  BACKEND_URL: "http://localhost:8080",
+  BACKEND_URL: resolveTeacherBackendBase(),
   ALLOWED_EMAIL_DOMAIN: "smus.ca",
 };
 

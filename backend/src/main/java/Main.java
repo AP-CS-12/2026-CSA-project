@@ -7,6 +7,8 @@ import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Main {
@@ -14,6 +16,7 @@ public class Main {
     private static final Gson gson = new Gson();
     private static final Gemini gemini = new Gemini();
     private static final SessionStore sessionStore = new SessionStore();
+    private static final ExecutorService prefetchExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
     public static void main(String[] args) throws Exception {
 
@@ -210,6 +213,22 @@ public class Main {
                     return;
                 }
 
+                int correctCount = session.data().correctCount();
+                int incorrectCount = session.data().incorrectCount();
+
+                // Record the previous answer's outcome against the question we last
+                // sent to this session, so the Gemini prompt can adapt to performance.
+                if (req.wasCorrect != null) {
+                    GeneratedQuestion prev = session.data().currentQuestion();
+                    if (prev != null
+                            && (req.previousQuestionId == null
+                                || req.previousQuestionId.equals(prev.questionId()))) {
+                        session.performance().record(prev.topic(), prev.difficulty(), req.wasCorrect);
+                    }
+                    if (req.wasCorrect) correctCount++;
+                    else incorrectCount++;
+                }
+
                 int difficulty = req.difficulty != null
                         ? req.difficulty
                         : session.data().currentDifficulty();
@@ -217,31 +236,47 @@ public class Main {
                         ? req.unit
                         : session.data().currentUnit();
 
-                String unitContext = getUnitContext(unit);
-                String prompt = buildPrompt(unitContext, difficulty);
-                String raw = gemini.generateReply(prompt);
+                // Try to consume a pre-generated question from the buffer.
+                // The buffered question's difficulty may be off by ±1 from the
+                // requested difficulty (it was generated before this answer was
+                // known) — accepted tradeoff for hiding generation latency.
+                GeneratedQuestion question = null;
+                CompletableFuture<GeneratedQuestion> buffered = session.takeNextQuestion();
+                if (buffered != null) {
+                    try {
+                        question = buffered.join();
+                    } catch (Exception bufferErr) {
+                        bufferErr.printStackTrace();
+                        question = null;
+                    }
+                }
 
-                GeneratedQuestion question = shuffleChoices(parseQuestion(raw, difficulty));
-
-                Database.insertQuestion(
-                        question.topic(),
-                        question.difficulty(),
-                        question.text(),
-                        gson.toJson(question.choices()),
-                        question.correctChoice()
-                );
+                if (question == null) {
+                    String performanceSummary = session.performance().summaryForPrompt();
+                    question = generateAndPersistQuestion(unit, difficulty, performanceSummary);
+                }
 
                 SessionData updated = new SessionData(
                         unit,
-                        difficulty,
+                        question.difficulty(),
                         question,
                         System.currentTimeMillis(),
-                        session.data().correctCount(),
-                        session.data().incorrectCount(),
+                        correctCount,
+                        incorrectCount,
                         session.data().status()
                 );
 
                 session.setData(updated);
+
+                // Refill the buffer asynchronously so the NEXT call returns instantly.
+                final int prefetchUnit = unit;
+                final int prefetchDifficulty = question.difficulty();
+                final String prefetchSummary = session.performance().summaryForPrompt();
+                CompletableFuture<GeneratedQuestion> nextFuture = CompletableFuture.supplyAsync(
+                        () -> generateAndPersistQuestion(prefetchUnit, prefetchDifficulty, prefetchSummary),
+                        prefetchExecutor);
+                session.setNextQuestion(nextFuture);
+
                 sessionStore.saveSession(session.sessionId(), session);
 
                 sendJson(exchange, 200, question);
@@ -358,6 +393,24 @@ public class Main {
         System.out.println("Server running on port " + port);
     }
 
+    private static GeneratedQuestion generateAndPersistQuestion(int unit, int difficulty, String performanceSummary) {
+        String unitContext = getUnitContext(unit);
+        String prompt = buildPrompt(unitContext, difficulty, performanceSummary);
+        String raw = gemini.generateReply(prompt);
+
+        GeneratedQuestion question = shuffleChoices(parseQuestion(raw, difficulty));
+
+        Database.insertQuestion(
+                question.topic(),
+                question.difficulty(),
+                question.text(),
+                gson.toJson(question.choices()),
+                question.correctChoice()
+        );
+
+        return question;
+    }
+
     private static String getUnitContext(int unit) {
 
         String sql = "SELECT title, content FROM ap_csa_units WHERE unit = ?";
@@ -409,7 +462,7 @@ public class Main {
                 """.formatted(unit);
     }
 
-    private static String buildPrompt(String unitContext, int difficulty) {
+    private static String buildPrompt(String unitContext, int difficulty, String performanceSummary) {
         return """
                TASK: JSON_OUTPUT_GENERATION
 
@@ -417,6 +470,12 @@ public class Main {
 
                CURRICULUM CONTEXT:
                 %s
+
+               PERFORMANCE-DRIVEN ADAPTATION (use this to choose the topic):
+                %s
+                - The student's pattern above is the PRIMARY signal for which topic to test next.
+                - The requested difficulty level (below) is the secondary signal — honor it exactly.
+                - Do NOT mention this performance data to the student in the question text.
 
                HARD RULE:
                 - Only generate questions based on the provided unit context
@@ -520,7 +579,7 @@ public class Main {
                CREATE THE QUESTION BASED ON DIFFICULTY LEVEL %d.
 
                RETURN: JSON_ONLY
-               """.formatted(unitContext, difficulty);
+               """.formatted(unitContext, performanceSummary, difficulty);
     }
 
     private static GeneratedQuestion shuffleChoices(GeneratedQuestion q) {
@@ -642,6 +701,11 @@ public class Main {
         String sessionId;
         Integer difficulty;
         Integer unit;
+        // Performance feedback for adaptive prompting. Sent by test.html
+        // alongside the next-question request after each committed answer.
+        String previousQuestionId;
+        String selectedChoice;
+        Boolean wasCorrect;
     }
 
     static class ChatRequest {
